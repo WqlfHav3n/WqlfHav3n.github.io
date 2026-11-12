@@ -304,11 +304,99 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 .vision-toggle.on .vt-name{color:var(--text)}
 .vision-toggle.on .vt-switch{background:rgba(109,255,168,.25);border-color:rgba(109,255,168,.5)}
 .vision-toggle.on .vt-switch::after{left:17px;background:#d9fff0;box-shadow:0 0 8px rgba(109,255,168,.8)}
-.setup-foot{display:flex;align-items:center;gap:12px;padding:0 20px 20px}
+.setup-foot{display:flex;align-items:center;gap:12px;padding:12px 20px 20px;position:sticky;bottom:0;z-index:3;background:linear-gradient(180deg,rgba(9,14,20,0),rgba(9,14,20,.94) 22%,rgba(9,14,20,.99));border-top:1px solid var(--line)}
 #setup-status{flex:1;font-size:10px;line-height:1.4;color:var(--dim);min-width:0}
 #setup-status.ok{color:var(--green)}
 #setup-status.warn{color:var(--amber)}
 #btn-start{min-width:210px;padding:14px 20px;font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:700}
+
+/* simplified setup / modes */
+.setup-card{width:min(840px,100%)}
+.field-label{display:flex;align-items:center;gap:6px;margin:0 0 6px;font-size:8.5px;letter-spacing:.15em;text-transform:uppercase;color:var(--dim);font-weight:600}
+.field-label .step-status{margin-left:auto}
+.game-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.mode{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 5px;border-radius:9px;border:1px solid var(--line);background:rgba(255,255,255,.03);text-align:center;transition:.15s}
+.mode i{font-size:14px;color:var(--dim);transition:.15s}
+.mode .nm{font-size:10.5px;font-weight:600}
+.mode .sp{font-family:var(--mono);font-size:8px;color:var(--dim);line-height:1.2}
+.mode:hover{border-color:var(--line-2);background:rgba(255,255,255,.06)}
+.mode.active{border-color:rgba(109,255,168,.5);background:rgba(109,255,168,.08)}
+.mode.active i,.mode.active .nm{color:var(--green)}
+.mode.active .sp{color:#b8ffd0}
+.team-choice{margin-top:9px;padding:9px;border-radius:9px;border:1px solid rgba(109,255,168,.22);background:rgba(109,255,168,.04)}
+.team-buttons{display:flex;gap:6px}
+.team-pick{flex:1;padding:6px;border-radius:7px;border:1px solid var(--line);background:rgba(255,255,255,.03);font-family:var(--mono);font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim)}
+.team-pick.active[data-team="A"]{color:var(--green);border-color:rgba(109,255,168,.5);background:rgba(109,255,168,.1)}
+.team-pick.active[data-team="B"]{color:var(--amber);border-color:rgba(255,182,72,.5);background:rgba(255,182,72,.1)}
+.setup-inline{display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap}
+.setup-inline .btn{height:30px;padding:0 10px;font-size:9.5px;letter-spacing:.06em}
+.setup-inline .setup-note{margin:0;flex:1;min-width:130px}
+.map-summary{display:flex;align-items:center;gap:12px;margin-top:9px;font-family:var(--mono);font-size:10px;color:var(--muted);flex-wrap:wrap}
+.map-summary b{color:var(--cyan)}
+.map-summary .sub{color:var(--dim);font-size:9px}
+.advanced{margin-top:9px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.02);overflow:hidden}
+.advanced summary{display:flex;align-items:center;gap:7px;padding:9px 11px;cursor:pointer;list-style:none;font-size:10px;font-weight:600;color:var(--muted);user-select:none}
+.advanced summary::-webkit-details-marker{display:none}
+.advanced summary i{color:var(--cyan);font-size:10px}
+.advanced summary span{margin-left:auto;font-family:var(--mono);font-size:8px;font-weight:400;color:var(--dim);letter-spacing:.04em}
+.advanced[open] summary{border-bottom:1px solid var(--line);color:var(--text)}
+.advanced-body{padding:11px;display:flex;flex-direction:column;gap:12px}
+.advanced-body .setup-note{margin:6px 0 0}
+.run-summary{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:4px}
+.run-summary span{font-family:var(--mono);font-size:8px;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:4px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--muted)}
+.setup-foot-main{flex:1;min-width:0}
+.account-chip{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:8.5px;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:5px;border:1px solid rgba(109,255,168,.28);background:rgba(109,255,168,.07);color:var(--green)}
+.account-chip:hover{background:rgba(109,255,168,.13)}
+.account-chip.off{color:var(--dim);border-color:var(--line);background:rgba(255,255,255,.04)}
+
+/* account + friends */
+.account-card{width:min(450px,100%);padding:22px}
+.modal-x{position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--muted);z-index:2}
+.account-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.account-avatar{width:44px;height:44px;flex:0 0 44px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:18px;color:var(--green);background:radial-gradient(circle at 30% 25%,rgba(109,255,168,.2),rgba(109,255,168,.03));border:1px solid rgba(109,255,168,.3)}
+.account-head h2{margin:0;font-size:17px;letter-spacing:.1em;text-transform:uppercase}
+.account-head p{margin:3px 0 0;font-size:9.5px;line-height:1.4;color:var(--dim)}
+.auth-tabs{display:flex;gap:3px;padding:3px;border-radius:9px;background:rgba(255,255,255,.05);border:1px solid var(--line);margin-bottom:10px}
+.auth-tab{flex:1;padding:6px;border-radius:6px;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);font-weight:600}
+.auth-tab.active{background:rgba(109,255,168,.14);color:var(--green)}
+.account-form{display:flex;flex-direction:column;gap:7px}
+.account-form .input{height:36px;font-size:12px}
+.account-form .btn{height:36px;font-size:10px;letter-spacing:.1em;text-transform:uppercase}
+.account-msg{min-height:15px;font-size:9.5px;line-height:1.4;color:var(--dim)}
+.account-msg.bad{color:var(--red)}
+.account-msg.ok{color:var(--green)}
+.account-msg.warn{color:var(--amber)}
+.account-id-row{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.03)}
+.account-id-row .nm{font-size:13px;font-weight:700}
+.account-id-row .sub{font-family:var(--mono);font-size:8.5px;color:var(--dim);margin-top:2px}
+.account-id-row .btn{margin-left:auto;height:28px;padding:0 9px;font-size:9px}
+.account-best{margin-top:8px;padding:9px 10px;border-radius:9px;border:1px solid rgba(255,182,72,.25);background:rgba(255,182,72,.05);font-family:var(--mono);font-size:9.5px;color:var(--amber);line-height:1.5}
+.friend-add{display:flex;gap:6px;margin-top:12px}
+.friend-add .input{height:34px;font-size:11px}
+.friend-add .btn{height:34px;padding:0 11px;font-size:9.5px}
+.friend-list{display:flex;flex-direction:column;gap:3px;margin-top:8px;max-height:190px;overflow:auto}
+.friend-row{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:8px;border:1px solid transparent;background:rgba(255,255,255,.02)}
+.friend-row .dot{width:6px;height:6px;border-radius:50%;background:var(--dim);flex:0 0 6px}
+.friend-row.online .dot{background:var(--green);box-shadow:0 0 7px var(--green)}
+.friend-row .nm{font-size:11px;font-weight:600;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.friend-row .sub{font-family:var(--mono);font-size:8px;color:var(--dim);margin-top:1px}
+.friend-row .pts{margin-left:auto;font-family:var(--mono);font-size:10px;font-weight:700;color:var(--amber)}
+.friend-row .rm{width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--dim);border:1px solid transparent;font-size:9px}
+.friend-row .rm:hover{color:var(--red);border-color:rgba(255,77,94,.3)}
+.friend-empty{padding:9px;text-align:center;font-size:9.5px;color:var(--dim);line-height:1.45}
+.account-note{margin:10px 0 0;font-size:8.5px;line-height:1.45;color:var(--dim)}
+.squad-chip.split{border-color:rgba(255,77,94,.5);color:var(--red);background:rgba(40,8,12,.9);animation:threatBlink .8s infinite alternate}
+.remote-name .team-tag{display:inline-block;margin-left:4px;padding:0 3px;border-radius:3px;font-family:var(--mono);font-size:7.5px;background:rgba(109,255,168,.18);color:var(--green)}
+.remote-marker.team-B .team-tag{background:rgba(255,182,72,.18);color:var(--amber)}
+.team-row{display:grid;grid-template-columns:26px 1fr;gap:8px;align-items:start;padding:8px;border-radius:9px;border:1px solid var(--line);background:rgba(255,255,255,.02)}
+.team-row.first{border-color:rgba(255,182,72,.28);background:rgba(255,182,72,.04)}
+.team-badge{width:24px;height:24px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;font-weight:700;border:1px solid rgba(109,255,168,.4);color:var(--green);background:rgba(109,255,168,.09)}
+.team-row.team-B .team-badge{border-color:rgba(255,182,72,.4);color:var(--amber);background:rgba(255,182,72,.09)}
+.team-row .nm{font-size:11px;font-weight:600;display:flex;align-items:center;gap:6px}
+.team-row .pts{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--amber)}
+.team-row .sub{font-family:var(--mono);font-size:8px;color:var(--dim);margin-top:2px;line-height:1.4}
+.team-row .members{font-size:9px;color:var(--muted);margin-top:2px;line-height:1.35}
 
 /* game over */
 .end-card{width:min(430px,100%);text-align:center;padding:28px 24px 22px}
@@ -422,6 +510,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
   .leaflet-bottom.leaflet-left{margin-bottom:190px}
   .setup-grid{grid-template-columns:1fr;padding:0 12px 12px}
   .step.wide{grid-column:auto}
+  .game-grid{grid-template-columns:1fr;gap:11px}
   .diff-grid{grid-template-columns:repeat(2,1fr)}
   .mission-grid{grid-template-columns:repeat(3,1fr)}
   .setup-head{padding:20px 16px 14px}
@@ -484,6 +573,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
   <div class="top-actions">
     <button id="btn-recenter" class="icon-btn hide-sm" title="Recenter map" type="button"><i class="fa-solid fa-crosshairs"></i></button>
     <button id="btn-leaderboard" class="icon-btn" title="Leaderboard" type="button"><i class="fa-solid fa-ranking-star"></i></button>
+    <button id="btn-account" class="icon-btn" title="Account &amp; friends" type="button"><i class="fa-solid fa-user"></i></button>
     <button id="btn-audio" class="icon-btn" title="Toggle audio" type="button"><i id="audio-icon" class="fa-solid fa-volume-high"></i></button>
     <button id="btn-vision" class="icon-btn on" title="Toggle vision cone &amp; heading" aria-pressed="true" type="button"><i class="fa-solid fa-eye"></i></button>
     <button id="btn-sim" class="icon-btn" title="Toggle simulation mode" type="button"><i class="fa-solid fa-gamepad"></i></button>
@@ -567,6 +657,8 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
       <h3><i class="fa-solid fa-ranking-star"></i> Leaderboard</h3>
       <div class="tabs">
         <button class="tab active" data-tab="room" type="button">Room</button>
+        <button class="tab" data-tab="teams" type="button">Teams</button>
+        <button class="tab" data-tab="friends" type="button">Friends</button>
         <button class="tab" data-tab="local" type="button">Local</button>
       </div>
     </div>
@@ -624,7 +716,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 
 <!-- ============================ SETUP MODAL ============================ -->
 <div id="setup-modal" class="modal open">
-  <div class="modal-card">
+  <div class="modal-card setup-card">
     <div class="setup-head">
       <div class="setup-mark"><i class="fa-solid fa-biohazard"></i></div>
       <h1>Z-RUN <span>// OUTBREAK</span></h1>
@@ -633,68 +725,53 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
         <span class="mini-chip"><i class="fa-solid fa-lock"></i> HTTPS</span>
         <span id="gps-chip" class="mini-chip warn"><i class="fa-solid fa-location-dot"></i> GPS pending</span>
         <span class="mini-chip"><i class="fa-solid fa-person-running"></i> Miles &amp; MPH</span>
+        <button id="account-chip" class="account-chip off" type="button"><i class="fa-solid fa-user"></i><span id="account-chip-text">Sign in</span></button>
       </div>
     </div>
 
     <div class="setup-grid">
-      <section class="step">
-        <div class="step-head"><span class="step-num">01</span><h4>Home Base</h4><span id="home-status" class="step-status">not set</span></div>
+      <section class="step wide">
+        <div class="step-head"><span class="step-num">01</span><h4>Runner &amp; Room</h4><span class="step-status">optional</span></div>
         <div class="row">
-          <button id="btn-gps-home" class="btn btn-green" type="button"><i class="fa-solid fa-location-crosshairs"></i> Use GPS</button>
-          <button id="btn-map-home" class="btn btn-ghost" type="button"><i class="fa-solid fa-map-pin"></i> Pick on map</button>
+          <input id="name-input" class="input" placeholder="Callsign" maxlength="16" autocomplete="off" spellcheck="false">
+          <input id="room-input" class="input" placeholder="Room code (join friends)" maxlength="10" autocomplete="off" spellcheck="false">
         </div>
-      </section>
-
-      <section class="step">
-        <div class="step-head"><span class="step-num">02</span><h4>Survival Zone</h4><span class="step-status">radius</span></div>
-        <div class="zone-read"><span id="radius-value" class="big">0.50 mi</span><span id="zone-across" class="sub">≈ 5,280 ft across</span></div>
-        <input id="radius-range" type="range" min="0.15" max="1.5" step="0.05" value="0.5" aria-label="Zone radius in miles">
-        <div class="presets">
-          <button class="preset" data-radius="0.25" type="button">0.25 mi</button>
-          <button class="preset active" data-radius="0.5" type="button">0.50 mi</button>
-          <button class="preset" data-radius="1.0" type="button">1.00 mi</button>
+        <div class="setup-inline">
+          <button id="btn-account-inline" class="btn btn-ghost" type="button"><i class="fa-solid fa-user-group"></i> Account &amp; friends</button>
+          <span class="setup-note">Same room = same horde. Leave blank for a solo run.</span>
         </div>
-        <div style="display:flex;gap:6px;margin-top:7px">
-          <button id="btn-draw-zone" class="btn btn-ghost" type="button" style="flex:1;padding:6px;font-size:10px"><i class="fa-solid fa-draw-polygon"></i> Draw custom zone</button>
-          <button id="btn-circle-zone" class="btn btn-ghost" type="button" style="flex:0 0 auto;padding:6px 9px;font-size:10px" title="Reset to circle"><i class="fa-solid fa-circle"></i></button>
-        </div>
-      </section>
-
-      <section class="step">
-        <div class="step-head"><span class="step-num">03</span><h4>Horde Pace</h4><span id="pace-status" class="step-status">jogger</span></div>
-        <div class="row3">
-          <button class="pace" data-mph="3.5" type="button"><i class="fa-solid fa-person-walking"></i><span class="nm">Walker</span><span class="sp">3.5 mph</span></button>
-          <button class="pace active" data-mph="5.5" type="button"><i class="fa-solid fa-person-running"></i><span class="nm">Jogger</span><span class="sp">5.5 mph</span></button>
-          <button class="pace" data-mph="7.5" type="button"><i class="fa-solid fa-bolt"></i><span class="nm">Runner</span><span class="sp">7.5 mph</span></button>
-        </div>
-        <p style="margin:9px 0 0;font-size:9px;line-height:1.45;color:var(--dim)">Infected travel roads, paths, parks and fields — never through houses or private property.</p>
-      </section>
-
-      <section class="step">
-        <div class="step-head"><span class="step-num">04</span><h4>Zombie Reach</h4><span id="reach-status" class="step-status">7.0 ft</span></div>
-        <div class="zone-read"><span id="reach-value" class="big" style="color:var(--red)">7.0 ft</span><span id="reach-sub" class="sub">5.2–7.9 ft by type</span></div>
-        <input id="reach-range" type="range" min="3" max="12" step="0.5" value="7" aria-label="Zombie strike reach in feet">
-        <div class="presets">
-          <button class="reach-preset" data-reach="4" type="button">4 ft</button>
-          <button class="reach-preset active" data-reach="7" type="button">7 ft</button>
-          <button class="reach-preset" data-reach="10" type="button">10 ft</button>
-        </div>
-        <p class="setup-note">How close a zombie must get before it can strike. Type differences still apply.</p>
       </section>
 
       <section class="step wide">
-        <div class="step-head"><span class="step-num">05</span><h4>Difficulty</h4><span id="difficulty-status" class="step-status">standard</span></div>
-        <div class="diff-grid">
-          <button class="diff" data-diff="easy" style="--dc:#6dffa8" type="button"><i class="fa-solid fa-leaf"></i><span class="nm">Easy</span><span class="sp">Sparse horde</span></button>
-          <button class="diff active" data-diff="normal" style="--dc:#4fe3ff" type="button"><i class="fa-solid fa-shield-halved"></i><span class="nm">Standard</span><span class="sp">Balanced</span></button>
-          <button class="diff" data-diff="hard" style="--dc:#ffb648" type="button"><i class="fa-solid fa-fire"></i><span class="nm">Hard</span><span class="sp">Dense horde</span></button>
-          <button class="diff" data-diff="nightmare" style="--dc:#ff4d5e" type="button"><i class="fa-solid fa-skull-crossbones"></i><span class="nm">Nightmare</span><span class="sp">No mercy</span></button>
+        <div class="step-head"><span class="step-num">02</span><h4>Game</h4><span id="mode-status" class="step-status">solo</span></div>
+        <div class="game-grid">
+          <div>
+            <div class="field-label">Mode</div>
+            <div class="mode-grid">
+              <button class="mode active" data-mode="solo" type="button"><i class="fa-solid fa-user"></i><span class="nm">Solo</span><span class="sp">Every runner for themself</span></button>
+              <button class="mode" data-mode="teams" type="button"><i class="fa-solid fa-people-group"></i><span class="nm">Teams</span><span class="sp">Stick with a teammate</span></button>
+            </div>
+            <div id="team-choice" class="team-choice hidden">
+              <span class="field-label">Your team</span>
+              <div class="team-buttons">
+                <button class="team-pick active" data-team="A" type="button">Alpha</button>
+                <button class="team-pick" data-team="B" type="button">Bravo</button>
+              </div>
+              <p class="setup-note">Everyone picks their own team. Stay within 30 m of a teammate to earn team points.</p>
+            </div>
+          </div>
+          <div>
+            <div class="field-label">Difficulty <span id="difficulty-status" class="step-status">standard</span></div>
+            <div class="diff-grid">
+              <button class="diff" data-diff="easy" style="--dc:#6dffa8" type="button"><i class="fa-solid fa-leaf"></i><span class="nm">Easy</span><span class="sp">Sparse</span></button>
+              <button class="diff active" data-diff="normal" style="--dc:#4fe3ff" type="button"><i class="fa-solid fa-shield-halved"></i><span class="nm">Standard</span><span class="sp">Balanced</span></button>
+              <button class="diff" data-diff="hard" style="--dc:#ffb648" type="button"><i class="fa-solid fa-fire"></i><span class="nm">Hard</span><span class="sp">Dense</span></button>
+              <button class="diff" data-diff="nightmare" style="--dc:#ff4d5e" type="button"><i class="fa-solid fa-skull-crossbones"></i><span class="nm">Nightmare</span><span class="sp">Brutal</span></button>
+            </div>
+            <p id="difficulty-desc" class="setup-note">Balanced horde size, vision and damage.</p>
+          </div>
         </div>
-        <p id="difficulty-desc" class="setup-note">Balanced horde size, vision and damage. The intended outbreak.</p>
-      </section>
-
-      <section class="step wide">
-        <div class="step-head"><span class="step-num">06</span><h4>Mission</h4><span id="mission-status" class="step-status">endless</span></div>
+        <div class="field-label" style="margin-top:12px">Mission <span id="mission-status" class="step-status">endless</span></div>
         <div class="mission-grid">
           <button class="mission active" data-mission="endless" type="button"><i class="fa-solid fa-infinity"></i><span class="nm">Endless</span><span class="sp">Score run</span></button>
           <button class="mission" data-mission="survive" type="button"><i class="fa-solid fa-hourglass-half"></i><span class="nm">Survive</span><span class="sp">5:00</span></button>
@@ -705,24 +782,113 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
         <p id="mission-desc" class="setup-note">No extraction. Survive the waves and rack up the highest score you can.</p>
       </section>
 
-      <section class="step">
-        <div class="step-head"><span class="step-num">07</span><h4>Callsign &amp; Room</h4><span class="step-status">optional</span></div>
-        <div style="display:flex;flex-direction:column;gap:6px">
-          <input id="name-input" class="input" placeholder="Callsign" maxlength="16" autocomplete="off" spellcheck="false">
-          <input id="room-input" class="input" placeholder="Room code (join friends)" maxlength="10" autocomplete="off" spellcheck="false">
+      <section class="step wide">
+        <div class="step-head"><span class="step-num">03</span><h4>Map &amp; Tuning</h4><span id="home-status" class="step-status">not set</span></div>
+        <div class="row">
+          <button id="btn-gps-home" class="btn btn-green" type="button"><i class="fa-solid fa-location-crosshairs"></i> Use GPS</button>
+          <button id="btn-map-home" class="btn btn-ghost" type="button"><i class="fa-solid fa-map-pin"></i> Pick on map</button>
         </div>
-        <button id="toggle-vision" class="vision-toggle on" type="button" aria-pressed="true">
-          <span class="vt-icon"><i class="fa-solid fa-eye"></i></span>
-          <span class="vt-text"><span class="vt-name">Vision cone &amp; heading</span><span class="vt-sub">Show your look direction on the map</span></span>
-          <span class="vt-switch" aria-hidden="true"></span>
-        </button>
-        <p style="margin:8px 0 0;font-size:9px;line-height:1.45;color:var(--dim)">Share a code to see the same horde, squadmates live, and compete on the room leaderboard. Leave blank for a solo run.</p>
+        <div class="map-summary">
+          <span><i class="fa-solid fa-circle-dot"></i> Zone <b id="radius-value">0.50 mi</b></span>
+          <span id="zone-across" class="sub">≈ 5,280 ft across</span>
+        </div>
+        <details id="advanced-tuning" class="advanced">
+          <summary><i class="fa-solid fa-sliders"></i> Advanced tuning <span>zone shape · pace · reach · vision</span></summary>
+          <div class="advanced-body">
+            <div>
+              <div class="field-label">Survival zone</div>
+              <input id="radius-range" type="range" min="0.15" max="1.5" step="0.05" value="0.5" aria-label="Zone radius in miles">
+              <div class="presets">
+                <button class="preset" data-radius="0.25" type="button">0.25 mi</button>
+                <button class="preset active" data-radius="0.5" type="button">0.50 mi</button>
+                <button class="preset" data-radius="1.0" type="button">1.00 mi</button>
+              </div>
+              <div style="display:flex;gap:6px;margin-top:7px">
+                <button id="btn-draw-zone" class="btn btn-ghost" type="button" style="flex:1;padding:6px;font-size:10px"><i class="fa-solid fa-draw-polygon"></i> Draw custom zone</button>
+                <button id="btn-circle-zone" class="btn btn-ghost" type="button" style="flex:0 0 auto;padding:6px 9px;font-size:10px" title="Reset to circle"><i class="fa-solid fa-circle"></i></button>
+              </div>
+            </div>
+            <div>
+              <div class="field-label">Horde pace <span id="pace-status" class="step-status">jogger</span></div>
+              <div class="row3">
+                <button class="pace" data-mph="3.5" type="button"><i class="fa-solid fa-person-walking"></i><span class="nm">Walker</span><span class="sp">3.5 mph</span></button>
+                <button class="pace active" data-mph="5.5" type="button"><i class="fa-solid fa-person-running"></i><span class="nm">Jogger</span><span class="sp">5.5 mph</span></button>
+                <button class="pace" data-mph="7.5" type="button"><i class="fa-solid fa-bolt"></i><span class="nm">Runner</span><span class="sp">7.5 mph</span></button>
+              </div>
+              <p class="setup-note">Infected travel roads, paths, parks and fields — never through houses or private property.</p>
+            </div>
+            <div>
+              <div class="field-label">Zombie reach <span id="reach-status" class="step-status">7.0 ft</span></div>
+              <div class="zone-read"><span id="reach-value" class="big" style="color:var(--red)">7.0 ft</span><span id="reach-sub" class="sub">5.2–7.9 ft by type</span></div>
+              <input id="reach-range" type="range" min="3" max="12" step="0.5" value="7" aria-label="Zombie strike reach in feet">
+              <div class="presets">
+                <button class="reach-preset" data-reach="4" type="button">4 ft</button>
+                <button class="reach-preset active" data-reach="7" type="button">7 ft</button>
+                <button class="reach-preset" data-reach="10" type="button">10 ft</button>
+              </div>
+              <p class="setup-note">How close a zombie must get before it can strike. Type differences still apply.</p>
+            </div>
+            <button id="toggle-vision" class="vision-toggle on" type="button" aria-pressed="true">
+              <span class="vt-icon"><i class="fa-solid fa-eye"></i></span>
+              <span class="vt-text"><span class="vt-name">Vision cone &amp; heading</span><span class="vt-sub">Show your look direction on the map</span></span>
+              <span class="vt-switch" aria-hidden="true"></span>
+            </button>
+          </div>
+        </details>
       </section>
     </div>
 
     <div class="setup-foot">
-      <div id="setup-status">Set a home base to deploy. Location is only used on this device (and in your private room if you join one).</div>
+      <div class="setup-foot-main">
+        <div id="run-summary" class="run-summary"></div>
+        <div id="setup-status">Set a home base to deploy. Location is only used on this device (and in your private room if you join one).</div>
+      </div>
       <button id="btn-start" class="btn btn-red" type="button" disabled><i class="fa-solid fa-play"></i> Initialize Run</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================ ACCOUNT MODAL ============================ -->
+<div id="account-modal" class="modal">
+  <div class="modal-card account-card">
+    <button id="account-close" class="modal-x" type="button" aria-label="Close account"><i class="fa-solid fa-xmark"></i></button>
+    <div class="account-head">
+      <div class="account-avatar"><i class="fa-solid fa-user"></i></div>
+      <div>
+        <h2>Runner Account</h2>
+        <p>Casual username &amp; password. Friends and long-term bests stay on this device and sync in live rooms.</p>
+      </div>
+    </div>
+
+    <div id="account-signed-out">
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-auth="in" type="button">Sign in</button>
+        <button class="auth-tab" data-auth="up" type="button">Create account</button>
+      </div>
+      <div class="account-form">
+        <input id="account-user" class="input" placeholder="Username" maxlength="16" autocomplete="username" spellcheck="false">
+        <input id="account-pass" class="input" type="password" placeholder="Password" maxlength="64" autocomplete="current-password">
+        <input id="account-pass2" class="input hidden" type="password" placeholder="Confirm password" maxlength="64" autocomplete="new-password">
+        <div id="account-msg" class="account-msg"></div>
+        <button id="account-submit" class="btn btn-green" type="button">Sign in</button>
+      </div>
+    </div>
+
+    <div id="account-signed-in" class="hidden">
+      <div class="account-id-row">
+        <div style="min-width:0">
+          <div id="account-name" class="nm">Runner</div>
+          <div id="account-since" class="sub">Local account</div>
+        </div>
+        <button id="account-signout" class="btn btn-ghost" type="button">Sign out</button>
+      </div>
+      <div id="account-best" class="account-best">No completed run yet. Your best will appear here.</div>
+      <div class="friend-add">
+        <input id="friend-input" class="input" placeholder="Friend username" maxlength="16" autocomplete="off" spellcheck="false">
+        <button id="friend-add-btn" class="btn btn-ghost" type="button"><i class="fa-solid fa-user-plus"></i> Add</button>
+      </div>
+      <div id="friend-list" class="friend-list"></div>
+      <p class="account-note">Friend bests sync when the relay is connected or when you share a room. This is a casual account — do not reuse a real password.</p>
     </div>
   </div>
 </div>
@@ -907,6 +1073,8 @@ const ZOMBIE_TYPES = {
 const ZOMBIE_ORDER = ['crawler', 'walker', 'brute', 'runner', 'screamer', 'stalker', 'player'];
 const ATTACK_RANGE_DEFAULT_M = 2.1; // ~7 ft
 const REACH_BASE_FT = 7; // default reach setting; type attackM values scale around this
+const TEAM_LINK_M = 30; // teammates must stay this close to earn team points
+const PROFILE_TOPIC = 'zrun/v2/profile/';
 function zombieReachScale() {
   const ft = Number(state.zombieReachFt);
   return (Number.isFinite(ft) && ft > 0 ? ft : REACH_BASE_FT) / REACH_BASE_FT;
@@ -961,6 +1129,10 @@ const state = {
   gpsFails: 0,
   muted: false,
   squadLinked: false,
+  teamMode: false,
+  team: 'A',
+  teamSplitSince: 0,
+  lastSplitToast: 0,
   lastDamageToast: 0,
   activeTab: 'room',
 };
@@ -1022,6 +1194,283 @@ const roomInputPanel = $('#room-input-panel');
 const btnStart = $('#btn-start');
 const toastsEl = $('#toasts');
 const damageFlash = $('#damage-flash');
+
+/* ---------------- accounts & friends ---------------- */
+const ACCOUNT_KEY = 'zrun.accounts.v1';
+const SESSION_KEY = 'zrun.session.v1';
+const acct = { user: null, rec: null, profiles: new Map(), pending: null, authMode: 'in' };
+
+function sanitizeUser(s) {
+  return String(s || '').toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 16);
+}
+function hashPass(user, pass) {
+  const s = `${sanitizeUser(user)}|${String(pass || '')}|zrun-outbreak`;
+  let a = 0x811c9dc5, b = 0x9e3779b9;
+  for (let round = 0; round < 4; round++) {
+    for (let i = 0; i < s.length; i++) {
+      const c = s.charCodeAt(i);
+      a = Math.imul(a ^ c, 16777619) >>> 0;
+      b = Math.imul(b ^ (c + round), 2246822519) >>> 0;
+    }
+    b = (b ^ a) >>> 0;
+  }
+  return a.toString(16).padStart(8, '0') + b.toString(16).padStart(8, '0');
+}
+function accountStore() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(ACCOUNT_KEY) || '{}');
+    return raw && typeof raw === 'object' ? raw : {};
+  } catch (e) { return {}; }
+}
+function saveAccountStore(store) {
+  try { localStorage.setItem(ACCOUNT_KEY, JSON.stringify(store)); } catch (e) {}
+}
+function loadSession() {
+  try {
+    const u = sanitizeUser(localStorage.getItem(SESSION_KEY));
+    if (!u) return;
+    const rec = accountStore()[u];
+    if (rec && rec.u) { acct.user = rec.u; acct.rec = rec; }
+  } catch (e) {}
+}
+function persistActiveAccount() {
+  if (!acct.user || !acct.rec) return;
+  const store = accountStore();
+  store[acct.user.toLowerCase()] = acct.rec;
+  saveAccountStore(store);
+}
+function setActiveAccount(rec) {
+  acct.user = rec.u;
+  acct.rec = rec;
+  try { localStorage.setItem(SESSION_KEY, rec.u.toLowerCase()); } catch (e) {}
+  state.name = rec.u;
+  if (nameInput) nameInput.value = rec.u;
+  savePrefs();
+  publishProfile();
+  if (state.gameActive) publishState();
+  renderAccount();
+  syncRunSummary();
+}
+function accountCreate(user, pass) {
+  user = sanitizeUser(user);
+  if (user.length < 3) return 'Username needs at least 3 letters or numbers.';
+  if (String(pass || '').length < 4) return 'Password needs at least 4 characters.';
+  const store = accountStore();
+  if (store[user]) return 'That username already exists on this device.';
+  const rec = { u: user, h: hashPass(user, pass), friends: [], best: null, created: Date.now() };
+  store[user] = rec;
+  saveAccountStore(store);
+  setActiveAccount(rec);
+  toast(`Account created · ${user}`, 'good', 2400);
+  return null;
+}
+function accountLogin(user, pass) {
+  user = sanitizeUser(user);
+  if (!user) return 'Enter your username.';
+  const store = accountStore();
+  const rec = store[user];
+  if (rec) {
+    if (rec.h !== hashPass(user, pass)) return 'Wrong password.';
+    setActiveAccount(rec);
+    return null;
+  }
+  const p = acct.profiles.get(user);
+  if (p && p.ph) {
+    if (p.ph !== hashPass(user, pass)) return 'Wrong password.';
+    const imported = { u: user, h: p.ph, friends: [], best: p.best || null, created: p.created || Date.now() };
+    store[user] = imported;
+    saveAccountStore(store);
+    setActiveAccount(imported);
+    return null;
+  }
+  requestProfile(user);
+  acct.pending = { user, pass, at: Date.now() };
+  return 'LOOKUP';
+}
+function accountSignOut() {
+  acct.user = null;
+  acct.rec = null;
+  acct.pending = null;
+  try { localStorage.removeItem(SESSION_KEY); } catch (e) {}
+  renderAccount();
+  syncRunSummary();
+  toast('Signed out', 'info', 1600);
+}
+function publishProfile() {
+  if (!net.connected || !net.client || !acct.rec) return;
+  const msg = {
+    t: 'profile', u: acct.user, ph: acct.rec.h,
+    best: acct.rec.best || null, created: acct.rec.created || Date.now(), ts: Date.now(),
+  };
+  try {
+    net.client.publish(PROFILE_TOPIC + acct.user, JSON.stringify(msg), { qos: 0, retain: true });
+  } catch (e) {}
+}
+function requestProfile(user) {
+  user = sanitizeUser(user);
+  if (!user || !net.connected || !net.client) return;
+  try { net.client.subscribe(PROFILE_TOPIC + user, { qos: 0 }); } catch (e) {}
+}
+function onProfileMessage(m) {
+  const u = sanitizeUser(m && m.u);
+  if (!u) return;
+  const prev = acct.profiles.get(u) || {};
+  acct.profiles.set(u, {
+    u, ph: m.ph || prev.ph || '', best: m.best || prev.best || null,
+    created: m.created || prev.created || 0, ts: m.ts || Date.now(),
+  });
+  if (acct.pending && acct.pending.user === u) {
+    const pend = acct.pending;
+    acct.pending = null;
+    const p = acct.profiles.get(u);
+    if (p && p.ph && p.ph === hashPass(u, pend.pass)) {
+      const store = accountStore();
+      const imported = { u, h: p.ph, friends: [], best: p.best || null, created: p.created || Date.now() };
+      store[u] = imported;
+      saveAccountStore(store);
+      setActiveAccount(imported);
+      setAccountMsg('Signed in — account synced from the relay.', 'ok');
+      toast(`Welcome back · ${u}`, 'good', 2400);
+    } else {
+      setAccountMsg('Password does not match that account.', 'bad');
+    }
+  }
+  renderAccount();
+  renderScoreboard();
+}
+function friendBest(name) {
+  name = sanitizeUser(name);
+  const p = acct.profiles.get(name);
+  const local = accountStore()[name];
+  const a = p && p.best;
+  const b = local && local.best;
+  if (a && b) return (Number(a.score) || 0) >= (Number(b.score) || 0) ? a : b;
+  return a || b || null;
+}
+function addFriend(name) {
+  name = sanitizeUser(name);
+  if (!acct.rec) return 'Sign in first.';
+  if (!name) return 'Enter a username.';
+  if (name === acct.user.toLowerCase()) return 'That is your own username.';
+  if (!acct.rec.friends) acct.rec.friends = [];
+  if (!acct.rec.friends.includes(name)) {
+    acct.rec.friends.push(name);
+    persistActiveAccount();
+    publishProfile();
+    toast(`${name} added to friends`, 'good', 2000);
+  }
+  requestProfile(name);
+  renderAccount();
+  renderScoreboard();
+  return null;
+}
+function removeFriend(name) {
+  if (!acct.rec) return;
+  name = sanitizeUser(name);
+  acct.rec.friends = (acct.rec.friends || []).filter(f => f !== name);
+  persistActiveAccount();
+  renderAccount();
+  renderScoreboard();
+}
+function recordAccountScore() {
+  if (!acct.user || !acct.rec) return;
+  const run = {
+    score: Math.round(state.score), dist: +(state.distanceM / M_PER_MI).toFixed(2),
+    time: Math.round(state.elapsed), wave: state.wave, mission: state.mission,
+    diff: state.difficulty, team: state.teamMode ? state.team : '', date: Date.now(),
+  };
+  const best = acct.rec.best;
+  if (!best || run.score > (Number(best.score) || 0)) acct.rec.best = run;
+  acct.rec.lastPlayed = Date.now();
+  persistActiveAccount();
+  publishProfile();
+  renderAccount();
+}
+function setAccountMsg(text, cls) {
+  const el = $('#account-msg');
+  if (!el) return;
+  el.textContent = text || '';
+  el.className = 'account-msg' + (cls ? ' ' + cls : '');
+}
+function renderAccount() {
+  const signed = !!(acct.user && acct.rec);
+  const out = $('#account-signed-out');
+  const inn = $('#account-signed-in');
+  if (out) out.classList.toggle('hidden', signed);
+  if (inn) inn.classList.toggle('hidden', !signed);
+  const chip = $('#account-chip');
+  const chipText = $('#account-chip-text');
+  if (chip) chip.classList.toggle('off', !signed);
+  if (chipText) chipText.textContent = signed ? acct.user : 'Sign in';
+  if (!signed) return;
+  const nameEl = $('#account-name');
+  const sinceEl = $('#account-since');
+  if (nameEl) nameEl.textContent = acct.user;
+  if (sinceEl) sinceEl.textContent = `Local account · ${new Date(acct.rec.created || Date.now()).toLocaleDateString()}`;
+  const bestEl = $('#account-best');
+  if (bestEl) {
+    const b = acct.rec.best;
+    bestEl.textContent = b
+      ? `Best · ${Math.round(Number(b.score) || 0).toLocaleString()} pts · ${(Number(b.dist) || 0).toFixed(2)} mi · ${fmtTime(Number(b.time) || 0)} survived`
+      : 'No completed run yet. Your best will appear here.';
+  }
+  const list = $('#friend-list');
+  if (!list) return;
+  const friends = acct.rec.friends || [];
+  if (!friends.length) {
+    list.innerHTML = '<div class="friend-empty">No friends yet. Add a username to compare long-term bests.</div>';
+    return;
+  }
+  const online = new Set();
+  for (const r of net.remotes.values()) if (r.u) online.add(sanitizeUser(r.u));
+  list.innerHTML = friends.map(f => {
+    const b = friendBest(f);
+    const live = online.has(f);
+    const sub = b
+      ? `${(Number(b.dist) || 0).toFixed(2)} mi · ${missionLabel(b.mission)}${b.team ? ' · Team ' + b.team : ''} · ${new Date(Number(b.date) || Date.now()).toLocaleDateString()}`
+      : 'No score synced yet';
+    return `<div class="friend-row ${live ? 'online' : ''}" data-friend="${escapeHtml(f)}">
+      <span class="dot"></span>
+      <div class="who" style="min-width:0">
+        <div class="nm">${escapeHtml(f)}${live ? ' · live' : ''}</div>
+        <div class="sub">${escapeHtml(sub)}</div>
+      </div>
+      <span class="pts">${b ? Math.round(Number(b.score) || 0).toLocaleString() : '—'}</span>
+      <button class="rm" type="button" data-remove-friend="${escapeHtml(f)}" title="Remove friend"><i class="fa-solid fa-xmark"></i></button>
+    </div>`;
+  }).join('');
+}
+function openAccount() {
+  renderAccount();
+  $('#account-modal').classList.add('open');
+  if (!acct.user) setTimeout(() => { const u = $('#account-user'); if (u) u.focus(); }, 60);
+}
+function closeAccount() { $('#account-modal').classList.remove('open'); }
+function setAuthMode(mode) {
+  acct.authMode = mode === 'up' ? 'up' : 'in';
+  $$('.auth-tab').forEach(t => t.classList.toggle('active', t.dataset.auth === acct.authMode));
+  const pass2 = $('#account-pass2');
+  if (pass2) pass2.classList.toggle('hidden', acct.authMode !== 'up');
+  const submit = $('#account-submit');
+  if (submit) submit.textContent = acct.authMode === 'up' ? 'Create account' : 'Sign in';
+  setAccountMsg('');
+}
+function submitAccount() {
+  const user = $('#account-user').value;
+  const pass = $('#account-pass').value;
+  if (acct.authMode === 'up') {
+    const pass2 = $('#account-pass2').value;
+    if (pass !== pass2) { setAccountMsg('Passwords do not match.', 'bad'); return; }
+    const err = accountCreate(user, pass);
+    if (err) setAccountMsg(err, 'bad');
+    else { setAccountMsg('Account created. You are signed in.', 'ok'); $('#account-pass').value = ''; $('#account-pass2').value = ''; }
+    return;
+  }
+  const err = accountLogin(user, pass);
+  if (err === 'LOOKUP') setAccountMsg('Looking up account on the relay… join a live room if this hangs.', 'warn');
+  else if (err) setAccountMsg(err, 'bad');
+  else { setAccountMsg('Signed in.', 'ok'); $('#account-pass').value = ''; }
+}
 
 /* ---------------- audio ---------------- */
 class SoundEngine {
@@ -1216,8 +1665,12 @@ function loadPrefs() {
   state.zombieReachFt = clamp(parseFloat(prefs.zombieReachFt) || REACH_BASE_FT, 3, 12);
   state.difficulty = DIFFICULTIES[prefs.difficulty] ? prefs.difficulty : 'normal';
   state.mission = MISSIONS[prefs.mission] ? prefs.mission : 'endless';
+  state.teamMode = !!prefs.teamMode;
+  state.team = prefs.team === 'B' ? 'B' : 'A';
   state.showVision = prefs.showVision !== false;
   state.muted = !!prefs.muted;
+  loadSession();
+  if (acct.rec) state.name = acct.user;
   nameInput.value = state.name;
   roomInput.value = state.room;
   roomInputPanel.value = state.room;
@@ -1228,6 +1681,9 @@ function loadPrefs() {
   syncDifficultyUI();
   syncMissionUI();
   syncVisionUI();
+  syncModeUI();
+  syncRunSummary();
+  renderAccount();
   audio.setMuted(state.muted);
   audioIcon.className = state.muted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
   $('#btn-audio').classList.toggle('on', !state.muted);
@@ -1248,6 +1704,7 @@ function savePrefs() {
       name: state.name, room: state.room, radiusMi: state.radiusMi,
       zombieMph: state.zombieMph, zombieReachFt: state.zombieReachFt,
       difficulty: state.difficulty, mission: state.mission,
+      teamMode: state.teamMode, team: state.team,
       showVision: state.showVision !== false, muted: state.muted,
     }));
   } catch (e) {}
@@ -1289,6 +1746,7 @@ function syncDifficultyUI() {
   const d = DIFFICULTIES[state.difficulty] || DIFFICULTIES.normal;
   if (difficultyStatus) difficultyStatus.textContent = d.label;
   if (difficultyDesc) difficultyDesc.textContent = d.desc;
+  syncRunSummary();
 }
 function syncMissionUI() {
   $$('.mission').forEach(b => b.classList.toggle('active', b.dataset.mission === state.mission));
@@ -1302,6 +1760,25 @@ function syncMissionUI() {
     missionIcon.className = `obj-icon ${m.tone}`;
     missionIcon.innerHTML = `<i class="fa-solid ${m.icon}"></i>`;
   }
+  syncRunSummary();
+}
+function syncModeUI() {
+  $$('.mode').forEach(b => b.classList.toggle('active', (b.dataset.mode === 'teams') === !!state.teamMode));
+  $$('.team-pick').forEach(b => b.classList.toggle('active', b.dataset.team === state.team));
+  const choice = $('#team-choice');
+  if (choice) choice.classList.toggle('hidden', !state.teamMode);
+  const status = $('#mode-status');
+  if (status) status.textContent = state.teamMode ? `teams · ${state.team}` : 'solo';
+  syncRunSummary();
+}
+function syncRunSummary() {
+  const el = $('#run-summary');
+  if (!el) return;
+  const d = DIFFICULTIES[state.difficulty] || DIFFICULTIES.normal;
+  const m = MISSIONS[state.mission] || MISSIONS.endless;
+  const bits = [d.label, m.name, state.teamMode ? `Team ${state.team}` : 'Solo'];
+  if (state.room) bits.push(`Room ${state.room}`);
+  el.innerHTML = bits.map(b => `<span>${escapeHtml(b)}</span>`).join('');
 }
 function syncVisionUI() {
   const on = state.showVision !== false;
@@ -1750,7 +2227,44 @@ function clearBeacon() {
 }
 
 let beaconRetryAt = 0;
-function setupMission() {
+function placeBeacon(lat, lng, opts = {}) {
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+  if (state.beacon && haversine(state.beacon.lat, state.beacon.lng, lat, lng) < 1.5) return;
+  clearBeacon();
+  state.beacon = { lat, lng };
+  const icon = L.divIcon({
+    className: 'extract-marker',
+    html: '<div class="extract-pulse"></div><div class="extract-core"><i class="fa-solid fa-helicopter"></i></div>',
+    iconSize: [42, 42], iconAnchor: [21, 21],
+  });
+  state.beaconMarker = L.marker([lat, lng], { icon, zIndexOffset: 420, interactive: false }).addTo(map);
+  state.beaconCircle = L.circle([lat, lng], {
+    radius: 26, color: '#6dffa8', weight: 1, opacity: 0.55,
+    fillColor: '#6dffa8', fillOpacity: 0.07, interactive: false,
+  }).addTo(map);
+  if (opts.announce !== false && state.player) {
+    toast(`Extraction beacon live · ${fmtMiles(haversine(state.player.lat, state.player.lng, lat, lng))} away`, 'info', 3600);
+  }
+}
+function publishBeacon() {
+  if (!state.gameActive || !net.connected || !net.client || !isHordeHost()) return;
+  if (state.mission !== 'extraction' || !state.beacon) return;
+  try {
+    net.client.publish(topic(), JSON.stringify({
+      t: 'b', id: net.id, lat: +state.beacon.lat.toFixed(6), lng: +state.beacon.lng.toFixed(6), ts: Date.now(),
+    }), { qos: 0 });
+  } catch (e) {}
+}
+function applyRemoteBeacon(lat, lng) {
+  if (!state.gameActive || state.mission !== 'extraction') return;
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+  const changed = !state.beacon || haversine(state.beacon.lat, state.beacon.lng, lat, lng) > 1.5;
+  if (!changed) { state.missionStarted = true; return; }
+  placeBeacon(lat, lng, { announce: false });
+  state.missionStarted = true;
+  toast('Extraction beacon synced with your room', 'info', 2400);
+}
+function setupMission(forceLocal = false) {
   const m = MISSIONS[state.mission] || MISSIONS.endless;
   state.missionStarted = true;
   state.missionComplete = false;
@@ -1760,6 +2274,10 @@ function setupMission() {
   if (state.mission !== 'extraction') return;
   if (!nav.ready || !state.player) {
     state.missionStarted = false;
+    return;
+  }
+  if (!forceLocal && ((state.room && !net.connected) || (net.connected && !isHordeHost()))) {
+    if (!state.beaconWaitSince) state.beaconWaitSince = Date.now();
     return;
   }
   const zoneR = state.radiusMi * M_PER_MI;
@@ -1772,18 +2290,8 @@ function setupMission() {
     state.missionStarted = false;
     return;
   }
-  state.beacon = { lat: node.lat, lng: node.lng };
-  const icon = L.divIcon({
-    className: 'extract-marker',
-    html: '<div class="extract-pulse"></div><div class="extract-core"><i class="fa-solid fa-helicopter"></i></div>',
-    iconSize: [42, 42], iconAnchor: [21, 21],
-  });
-  state.beaconMarker = L.marker([node.lat, node.lng], { icon, zIndexOffset: 420, interactive: false }).addTo(map);
-  state.beaconCircle = L.circle([node.lat, node.lng], {
-    radius: 26, color: '#6dffa8', weight: 1, opacity: 0.55,
-    fillColor: '#6dffa8', fillOpacity: 0.07, interactive: false,
-  }).addTo(map);
-  toast(`Extraction beacon live · ${fmtMiles(haversine(state.player.lat, state.player.lng, node.lat, node.lng))} away`, 'info', 3600);
+  placeBeacon(node.lat, node.lng, { announce: true });
+  publishBeacon();
 }
 
 function missionProgress() {
@@ -1814,7 +2322,9 @@ function checkMission() {
   if (!m || state.mission === 'endless') return;
   if (state.mission === 'extraction' && !state.beacon && nav.ready && performance.now() >= beaconRetryAt) {
     beaconRetryAt = performance.now() + 3000;
-    setupMission();
+    const waited = state.beaconWaitSince && Date.now() - state.beaconWaitSince > 9000;
+    if (waited) setupMission(true);
+    else setupMission();
   }
   let done = false;
   if (state.mission === 'survive') done = state.elapsed >= m.target;
@@ -2602,7 +3112,9 @@ function publishZombieSnapshot() {
   if (!state.gameActive || !net.connected || !net.client || !net.room) return;
   if (!isHordeHost()) return;
   const list = zombies.map(z => [z.id, (z.type && z.type.id) || 'walker', +z.lat.toFixed(5), +z.lng.toFixed(5), z.alerted ? 1 : 0]);
-  try { net.client.publish(topic(), JSON.stringify({ t: 'z', id: net.id, z: list, ts: Date.now() }), { qos: 0 }); } catch (e) {}
+  const b = state.mission === 'extraction' && state.beacon
+    ? [+state.beacon.lat.toFixed(6), +state.beacon.lng.toFixed(6)] : null;
+  try { net.client.publish(topic(), JSON.stringify({ t: 'z', id: net.id, z: list, b, ts: Date.now() }), { qos: 0 }); } catch (e) {}
 }
 function applyZombieSnapshot(list) {
   if (!state.gameActive || !Array.isArray(list)) return;
@@ -2722,16 +3234,55 @@ function updateThreat() {
   }
 }
 
+function activeTeammates() {
+  const out = [];
+  if (!state.player || !net.connected) return out;
+  const now = Date.now();
+  for (const r of net.remotes.values()) {
+    if (now - (r.lastSeen || 0) > 12000) continue;
+    if (r.st === 'down') continue;
+    if (!Number.isFinite(r.lat) || !Number.isFinite(r.lng)) continue;
+    if ((r.team || 'A') !== state.team) continue;
+    out.push(r);
+  }
+  return out;
+}
 function updateSquad() {
   let near = false;
   if (state.player && net.connected) {
-    for (const r of net.remotes.values()) {
-      if (Date.now() - r.lastSeen > 12000) continue;
-      if (haversine(state.player.lat, state.player.lng, r.lat, r.lng) < 45) { near = true; break; }
+    const radius = state.teamMode ? TEAM_LINK_M : 45;
+    const list = state.teamMode ? activeTeammates() : Array.from(net.remotes.values());
+    for (const r of list) {
+      if (Date.now() - (r.lastSeen || 0) > 12000) continue;
+      if (!Number.isFinite(r.lat) || !Number.isFinite(r.lng)) continue;
+      if (haversine(state.player.lat, state.player.lng, r.lat, r.lng) < radius) { near = true; break; }
     }
   }
   state.squadLinked = near;
-  squadChip.classList.toggle('hidden', !near);
+  if (state.teamMode) {
+    const mates = activeTeammates();
+    if (mates.length && !near) {
+      if (!state.teamSplitSince) state.teamSplitSince = Date.now();
+      const splitSec = Math.floor((Date.now() - state.teamSplitSince) / 1000);
+      squadChip.classList.remove('hidden');
+      squadChip.classList.add('split');
+      squadChip.innerHTML = `<i class="fa-solid fa-link-slash"></i><span>SPLIT ${splitSec}s</span>`;
+      if (splitSec >= 12 && Date.now() - state.lastSplitToast > 9000) {
+        state.lastSplitToast = Date.now();
+        toast('Team split — regroup with a teammate to earn team points', 'warn', 2600);
+      }
+    } else {
+      state.teamSplitSince = 0;
+      squadChip.classList.remove('split');
+      squadChip.innerHTML = `<i class="fa-solid fa-link"></i><span>${near ? 'TEAM LINK' : 'NO MATE'}</span>`;
+      squadChip.classList.toggle('hidden', !mates.length);
+    }
+  } else {
+    state.teamSplitSince = 0;
+    squadChip.classList.remove('split');
+    squadChip.innerHTML = '<i class="fa-solid fa-link"></i><span>SQUAD</span>';
+    squadChip.classList.toggle('hidden', !near);
+  }
 }
 
 function updateHUD() {
@@ -2769,6 +3320,7 @@ function clearWorld() {
   waypoints.forEach(w => { if (w.marker) map.removeLayer(w.marker); });
   waypoints = [];
   clearBeacon();
+  state.beaconWaitSince = 0;
   pathCache.clear();
   threatBanner.classList.add('hidden');
   audio.stopSiren();
@@ -2805,6 +3357,8 @@ function startGame() {
   state.missionStarted = false;
   state.missionStartDist = 0;
   state.nearestZombie = Infinity;
+  state.teamSplitSince = 0;
+  state.lastSplitToast = 0;
   state.startedAt = Date.now();
   state.lastTick = performance.now();
   state.zombieMps = state.zombieMph * MPS_PER_MPH;
@@ -2827,6 +3381,7 @@ function startGame() {
   loadNavigation();
   connectRoom();
   announceRespawn();
+  publishProfile();
   startPublishLoop();
   startZombieSync();
   scheduleSpawner();
@@ -2853,6 +3408,7 @@ function endGame(win = false) {
   clearBeacon();
 
   const result = saveLocalScore();
+  recordAccountScore();
   const isBest = result.isBest;
   $('#new-best').classList.toggle('hidden', !isBest);
   $('#end-icon').className = 'end-icon' + (won ? ' win' : '');
@@ -2869,7 +3425,7 @@ function endGame(win = false) {
   $('#end-wave').textContent = String(state.wave);
   $('#end-best').textContent = Math.round(result.best).toLocaleString();
   const missionEl = $('#end-mission');
-  if (missionEl) missionEl.textContent = `${m.name} · ${won ? 'complete' : 'failed'}`;
+  if (missionEl) missionEl.textContent = `${m.name} · ${state.teamMode ? 'Team ' + state.team : 'Solo'} · ${won ? 'complete' : 'failed'}`;
   updateHUD();
   updateFov();
   gameOverModal.classList.add('open');
@@ -2907,8 +3463,11 @@ function resetRun(showSetup) {
   state.lastDamageToast = 0;
   state.lastScoreRender = 0;
   state.squadLinked = false;
+  state.teamSplitSince = 0;
+  state.lastSplitToast = 0;
   state.gpsFails = 0;
   squadChip.classList.add('hidden');
+  squadChip.classList.remove('split');
   nav.loading = false;
   nav.token++;
   updateHUD();
@@ -2963,7 +3522,7 @@ function loop() {
   checkZombieAttacks(now);
   checkMission();
   updateSquad();
-  if (state.squadLinked) state.score += 2 * dt;
+  if (state.squadLinked) state.score += (state.teamMode ? 3 : 2) * dt;
   updateHUD();
   if (now - (state.lastScoreRender || 0) > 2200) {
     state.lastScoreRender = now;
@@ -3064,8 +3623,10 @@ function connectRoom() {
         toast(`Linked to room ${net.room}`, 'good', 2600);
       }
       client.subscribe(topic(), { qos: 0 });
+      client.subscribe(PROFILE_TOPIC + '+', { qos: 0 });
       setRoomStatus('live');
       publishState();
+      publishProfile();
       if (state.gameActive) announceRespawn();
       renderScoreboard();
     });
@@ -3101,6 +3662,16 @@ function onNetMessage(topicName, payload) {
   if (m.t === 'z') {
     if (m.id === net.id || isHordeHost()) return;
     applyZombieSnapshot(m.z);
+    if (Array.isArray(m.b) && m.b.length >= 2) applyRemoteBeacon(m.b[0], m.b[1]);
+    return;
+  }
+  if (m.t === 'b') {
+    if (m.id === net.id || isHordeHost()) return;
+    applyRemoteBeacon(m.lat, m.lng);
+    return;
+  }
+  if (m.t === 'profile') {
+    onProfileMessage(m);
     return;
   }
   if (m.t === 'pz') {
@@ -3130,19 +3701,31 @@ function onNetMessage(topicName, payload) {
 }
 
 function upsertRemoteMarker(r) {
+  const hue = hashHue(String(r.id));
+  const label = `${escapeHtml(r.name || 'Runner')}${r.team && r.tm ? `<span class="team-tag">${escapeHtml(r.team)}</span>` : ''}`;
   if (!r.marker) {
-    const hue = hashHue(String(r.id));
     const icon = L.divIcon({
       className: '',
-      html: `<div class="remote-marker" style="--c:hsl(${hue},85%,66%)"><div class="remote-dot"></div><div class="remote-name">${escapeHtml(r.name || 'Runner')}</div></div>`,
+      html: `<div class="remote-marker ${r.team ? 'team-' + escapeHtml(r.team) : ''}" style="--c:hsl(${hue},85%,66%)"><div class="remote-dot"></div><div class="remote-name">${label}</div></div>`,
       iconSize: [10, 10], iconAnchor: [5, 5],
     });
     r.marker = L.marker([r.lat, r.lng], { icon, zIndexOffset: 450, interactive: false }).addTo(map);
+    r.markerLabel = label;
   } else {
     r.marker.setLatLng([r.lat, r.lng]);
+    if (r.markerLabel !== label) {
+      const el = r.marker.getElement();
+      const nm = el && el.querySelector('.remote-name');
+      if (nm) nm.innerHTML = label;
+      r.markerLabel = label;
+    }
   }
   const el = r.marker.getElement();
-  if (el) el.classList.toggle('down', r.st === 'down');
+  if (el) {
+    el.classList.toggle('down', r.st === 'down');
+    const root = el.querySelector('.remote-marker');
+    if (root) root.classList.toggle('team-B', r.team === 'B');
+  }
 }
 
 function pruneRemotes() {
@@ -3167,6 +3750,8 @@ function publishState(final = false) {
     dist: +(state.distanceM / M_PER_MI).toFixed(2), sup: state.supplies,
     wave: state.wave, speed: +state.speedMph.toFixed(1),
     mission: state.mission, diff: state.difficulty,
+    time: Math.round(state.elapsed), team: state.team, tm: state.teamMode ? 1 : 0,
+    u: acct.user || '',
     st: final ? 'down' : (state.gameActive ? 'run' : 'idle'), ts: Date.now(),
   };
   try { net.client.publish(topic(), JSON.stringify(msg), { qos: 0 }); } catch (e) {}
@@ -3184,6 +3769,85 @@ function startPublishLoop() {
 function missionLabel(key) {
   const m = MISSIONS[key];
   return m ? (m.tag || m.short) : 'Endless';
+}
+function roomEntries() {
+  const entries = [{
+    id: 'me', name: state.name || 'You', score: Math.round(state.score),
+    dist: state.distanceM / M_PER_MI, wave: state.wave,
+    mission: state.mission, diff: state.difficulty,
+    time: Math.round(state.elapsed), team: state.team, tm: state.teamMode,
+    u: acct.user || '', st: state.gameActive ? 'run' : 'idle', me: true,
+  }];
+  for (const r of net.remotes.values()) {
+    if (Date.now() - (r.lastSeen || 0) > 16000) continue;
+    entries.push({
+      id: r.id, name: r.name || 'Runner', score: Number(r.score) || 0,
+      dist: Number(r.dist) || 0, wave: Number(r.wave) || 1,
+      mission: r.mission || 'endless', diff: r.diff || 'normal',
+      time: Number(r.time) || 0, team: r.team === 'B' ? 'B' : 'A', tm: !!r.tm,
+      u: r.u || '', st: r.st || 'run', me: false,
+    });
+  }
+  return entries;
+}
+function renderTeamBoard(entries) {
+  const anyTeams = state.teamMode || entries.some(e => e.tm);
+  if (!anyTeams) {
+    scoreList.innerHTML = '<li class="score-empty">Teams are off.<br>Choose <b>Teams</b> in the setup menu, then each runner picks Alpha or Bravo.</li>';
+    return;
+  }
+  const groups = { A: [], B: [] };
+  for (const e of entries) (groups[e.team === 'B' ? 'B' : 'A']).push(e);
+  const rows = ['A', 'B'].map(key => {
+    const list = groups[key];
+    if (!list.length) return null;
+    const total = list.reduce((sum, e) => sum + (Number(e.score) || 0), 0);
+    const bestTime = list.reduce((m, e) => Math.max(m, Number(e.time) || 0), 0);
+    const down = list.filter(e => e.st === 'down').length;
+    return { key, list, total, bestTime, down };
+  }).filter(Boolean).sort((a, b) => b.total - a.total);
+  scoreList.innerHTML = rows.map((r, i) => `
+    <li class="team-row ${r.key === 'B' ? 'team-B' : ''} ${i === 0 ? 'first' : ''}">
+      <span class="team-badge">${r.key}</span>
+      <div>
+        <div class="nm">Team ${r.key === 'A' ? 'Alpha' : 'Bravo'}<span class="pts">${Math.round(r.total).toLocaleString()}</span></div>
+        <div class="sub">${r.list.length} runner${r.list.length === 1 ? '' : 's'} · best survival ${fmtTime(r.bestTime)}${r.down ? ` · ${r.down} down` : ''}</div>
+        <div class="members">${r.list.map(e => escapeHtml(e.name) + (e.me ? ' (you)' : '')).join(' · ')}</div>
+      </div>
+    </li>`).join('');
+}
+function renderFriendBoard() {
+  if (!acct.rec) {
+    scoreList.innerHTML = '<li class="score-empty">Sign in to keep a long-term leaderboard with friends.<br><button class="btn btn-ghost" id="score-signin" type="button" style="margin-top:8px;height:28px;font-size:9px">Account &amp; friends</button></li>';
+    const b = $('#score-signin');
+    if (b) b.addEventListener('click', openAccount);
+    return;
+  }
+  const friends = acct.rec.friends || [];
+  if (!friends.length) {
+    scoreList.innerHTML = '<li class="score-empty">No friends yet.<br><button class="btn btn-ghost" id="score-addfriend" type="button" style="margin-top:8px;height:28px;font-size:9px">Add a friend</button></li>';
+    const b = $('#score-addfriend');
+    if (b) b.addEventListener('click', openAccount);
+    return;
+  }
+  const online = new Set();
+  for (const r of net.remotes.values()) if (r.u) online.add(sanitizeUser(r.u));
+  const rows = friends.map(f => ({ name: f, best: friendBest(f), live: online.has(f) }))
+    .sort((a, b) => (Number(b.best && b.best.score) || 0) - (Number(a.best && a.best.score) || 0));
+  scoreList.innerHTML = rows.map((r, i) => {
+    const b = r.best;
+    const sub = b
+      ? `${(Number(b.dist) || 0).toFixed(2)} mi · ${missionLabel(b.mission)}${b.team ? ' · Team ' + b.team : ''} · ${new Date(Number(b.date) || Date.now()).toLocaleDateString()}`
+      : 'No score synced yet';
+    return `<li class="score-row">
+      <span class="rank">${i + 1}</span>
+      <div class="who">
+        <div class="nm">${escapeHtml(r.name)}${r.live ? '<span class="you">LIVE</span>' : ''}</div>
+        <div class="sub">${escapeHtml(sub)}</div>
+      </div>
+      <span class="pts">${b ? Math.round(Number(b.score) || 0).toLocaleString() : '—'}</span>
+    </li>`;
+  }).join('');
 }
 function renderScoreboard() {
   if (!scoreList) return;
@@ -3205,29 +3869,25 @@ function renderScoreboard() {
     return;
   }
 
-  const entries = [];
-  entries.push({
-    id: 'me', name: state.name || 'You', score: Math.round(state.score),
-    dist: state.distanceM / M_PER_MI, wave: state.wave,
-    mission: state.mission, diff: state.difficulty,
-    st: state.gameActive ? 'run' : 'idle', me: true,
-  });
-  for (const r of net.remotes.values()) {
-    if (Date.now() - (r.lastSeen || 0) > 16000) continue;
-    entries.push({
-      id: r.id, name: r.name || 'Runner', score: Number(r.score) || 0,
-      dist: Number(r.dist) || 0, wave: Number(r.wave) || 1,
-      mission: r.mission || 'endless', diff: r.diff || 'normal',
-      st: r.st || 'run', me: false,
-    });
+  const entries = roomEntries();
+  if (state.activeTab === 'teams') {
+    renderTeamBoard(entries);
+    setRoomStatus(net.connected ? 'live' : net.connecting ? 'connecting' : 'solo',
+      net.connected ? `Live · ${net.remotes.size + 1} runner${net.remotes.size ? 's' : ''}` : undefined);
+    return;
   }
+  if (state.activeTab === 'friends') {
+    renderFriendBoard();
+    return;
+  }
+
   entries.sort((a, b) => b.score - a.score || b.dist - a.dist);
   scoreList.innerHTML = entries.slice(0, 14).map((e, i) => `
     <li class="score-row ${e.me ? 'me' : ''}">
       <span class="rank">${i + 1}</span>
       <div class="who">
         <div class="nm">${escapeHtml(e.name)}${e.me ? '<span class="you">YOU</span>' : ''}</div>
-        <div class="sub">${e.dist.toFixed(2)} mi · wave ${e.wave} · ${missionLabel(e.mission)}${e.st === 'down' ? ' · down' : ''}</div>
+        <div class="sub">${e.dist.toFixed(2)} mi · wave ${e.wave} · ${missionLabel(e.mission)}${e.tm ? ' · Team ' + e.team : ''}${e.st === 'down' ? ' · down' : ''}</div>
       </div>
       <span class="pts">${Math.round(e.score).toLocaleString()}</span>
     </li>`).join('');
@@ -3382,14 +4042,59 @@ function bindUI() {
     savePrefs();
   }));
 
-  nameInput.addEventListener('input', () => { state.name = sanitizeName(nameInput.value); });
+  $$('.mode').forEach(b => b.addEventListener('click', () => {
+    state.teamMode = b.dataset.mode === 'teams';
+    syncModeUI();
+    savePrefs();
+  }));
+  $$('.team-pick').forEach(b => b.addEventListener('click', () => {
+    state.team = b.dataset.team === 'B' ? 'B' : 'A';
+    syncModeUI();
+    savePrefs();
+    if (state.gameActive) publishState();
+  }));
+
+  nameInput.addEventListener('input', () => {
+    state.name = sanitizeName(nameInput.value);
+    syncRunSummary();
+  });
   roomInput.addEventListener('input', () => {
     state.room = sanitizeRoom(roomInput.value);
     roomInputPanel.value = state.room;
+    syncRunSummary();
   });
   roomInputPanel.addEventListener('input', () => {
     state.room = sanitizeRoom(roomInputPanel.value);
     roomInput.value = state.room;
+    syncRunSummary();
+  });
+
+  ['#btn-account', '#btn-account-inline', '#account-chip'].forEach(sel => {
+    const el = $(sel);
+    if (el) el.addEventListener('click', () => { audio.init(); openAccount(); });
+  });
+  $('#account-close').addEventListener('click', closeAccount);
+  $('#account-modal').addEventListener('click', (e) => { if (e.target === $('#account-modal')) closeAccount(); });
+  $$('.auth-tab').forEach(t => t.addEventListener('click', () => setAuthMode(t.dataset.auth)));
+  $('#account-submit').addEventListener('click', submitAccount);
+  $('#account-pass').addEventListener('keydown', (e) => { if (e.key === 'Enter') submitAccount(); });
+  $('#account-pass2').addEventListener('keydown', (e) => { if (e.key === 'Enter') submitAccount(); });
+  $('#account-signout').addEventListener('click', accountSignOut);
+  $('#friend-add-btn').addEventListener('click', () => {
+    const input = $('#friend-input');
+    const err = addFriend(input.value);
+    if (err) toast(err, 'warn', 2000);
+    else input.value = '';
+  });
+  $('#friend-input').addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    const err = addFriend(e.target.value);
+    if (err) toast(err, 'warn', 2000);
+    else e.target.value = '';
+  });
+  $('#friend-list').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-remove-friend]');
+    if (btn) removeFriend(btn.dataset.removeFriend);
   });
 
   btnStart.addEventListener('click', startGame);
@@ -3439,8 +4144,10 @@ function bindUI() {
     state.name = sanitizeName(nameInput.value) || state.name || defaultName();
     roomInput.value = state.room;
     roomInputPanel.value = state.room;
+    syncRunSummary();
     savePrefs();
     connectRoom();
+    publishProfile();
     if (state.gameActive) publishState();
   });
 
@@ -3481,7 +4188,8 @@ function copyInvite() {
 function shareRun() {
   const m = MISSIONS[state.mission] || MISSIONS.endless;
   const d = currentDifficulty();
-  const text = `I scored ${Math.round(state.score).toLocaleString()} pts running ${fmtMiles(state.distanceM)} in Z-Run // Outbreak Protocol — ${m.name} on ${d.name}, wave ${state.wave}. Think you can outrun the horde?`;
+  const modeText = state.teamMode ? `Team ${state.team}` : 'Solo';
+  const text = `I scored ${Math.round(state.score).toLocaleString()} pts running ${fmtMiles(state.distanceM)} in Z-Run // Outbreak Protocol — ${m.name} on ${d.name}, ${modeText}, wave ${state.wave}. Think you can outrun the horde?`;
   const url = location.href.split('?')[0];
   if (navigator.share) {
     navigator.share({ title: 'Z-Run // Outbreak Protocol', text, url }).catch(() => {});
