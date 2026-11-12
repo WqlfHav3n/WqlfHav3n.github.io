@@ -1,2 +1,2 @@
 # WqlfHav3n.github.io
-Hacks for school unblocked (hopefully) 🐺🐕
+a better way to exercise 
