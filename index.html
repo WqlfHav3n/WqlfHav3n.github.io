@@ -1,1306 +1,2649 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Z-Run: Street Survival GPS</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Leaflet CSS & JS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <!-- Leaflet Draw CSS & JS -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <style>
-        /* Custom map dark filter & full viewport layout */
-        html, body {
-            height: 100%;
-            width: 100vw;
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background-color: #090d16;
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            user-select: none;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#06090d">
+<meta name="description" content="Z-Run: Outbreak Protocol — a GPS street survival running game. Outrun the horde on real streets, parks and fields.">
+<title>Z-Run // Outbreak Protocol</title>
 
-        #map {
-            height: 100%;
-            width: 100%;
-            z-index: 1;
-        }
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-        /* Dark apocalyptic map tiles overlay */
-        .dark-tiles .leaflet-tile-container img {
-            filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
-        }
+<style>
+/* ============================ DESIGN TOKENS ============================ */
+:root{
+  --bg:#06090d;
+  --panel:rgba(11,17,24,.87);
+  --panel-2:rgba(16,23,31,.92);
+  --line:rgba(255,255,255,.075);
+  --line-2:rgba(255,255,255,.15);
+  --text:#e9f1f7;
+  --muted:#93a5b5;
+  --dim:#5f7183;
+  --green:#6dffa8;
+  --green-2:#19c46b;
+  --red:#ff4d5e;
+  --red-2:#ff2d3f;
+  --amber:#ffb648;
+  --cyan:#4fe3ff;
+  --violet:#b18cff;
+  --radius:16px;
+  --shadow:0 18px 50px rgba(0,0,0,.55);
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,monospace;
+  --ui:'Chakra Petch','Inter',system-ui,-apple-system,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--text);font-family:var(--ui);-webkit-tap-highlight-color:transparent}
+body{user-select:none;-webkit-user-select:none}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;border:none;background:none}
+.hidden{display:none!important}
+.mono{font-family:var(--mono)}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);border-radius:99px}
 
-        /* Custom SVG Radar Pulsing Marker */
-        .player-pulse-marker {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .pulse-ring {
-            border: 2px solid #10b981;
-            border-radius: 50%;
-            height: 36px;
-            width: 36px;
-            position: absolute;
-            animation: pulsedisperse 1.8s infinite ease-out;
-            opacity: 0;
-        }
-        @keyframes pulsedisperse {
-            0% { transform: scale(0.3); opacity: 0.9; }
-            80% { opacity: 0.4; }
-            100% { transform: scale(1.6); opacity: 0; }
-        }
+/* ============================ MAP ============================ */
+#map{position:fixed;inset:0;z-index:1;background:#0a0f14}
+.leaflet-tile-pane{filter:invert(1) hue-rotate(180deg) brightness(.78) contrast(.92) saturate(.62)}
+.map-grade{position:fixed;inset:0;z-index:2;pointer-events:none;background:
+  radial-gradient(ellipse at 50% 45%, transparent 35%, rgba(2,5,8,.42) 100%),
+  linear-gradient(180deg, rgba(4,8,12,.55) 0%, transparent 18%, transparent 78%, rgba(4,8,12,.6) 100%);}
+.map-grade::after{content:'';position:absolute;inset:0;opacity:.035;background:repeating-linear-gradient(0deg,#fff 0 1px,transparent 1px 3px)}
+.leaflet-control-zoom{border:none!important;box-shadow:var(--shadow);border-radius:12px;overflow:hidden;margin-top:86px!important;margin-right:12px!important}
+.leaflet-control-zoom a{background:rgba(11,17,24,.92)!important;color:#cfe0ec!important;border-color:var(--line)!important;width:34px!important;height:34px!important;line-height:34px!important;font-size:16px!important}
+.leaflet-control-zoom a:hover{background:rgba(30,42,54,.95)!important}
+.leaflet-control-attribution{background:rgba(6,10,14,.7)!important;color:#5f7183!important;font-size:9px!important;padding:1px 6px!important;border-radius:6px 0 0 0}
+.leaflet-control-attribution a{color:#8ea0b0!important}
+.leaflet-control-scale-line{background:rgba(6,10,14,.65)!important;color:#93a5b5!important;border-color:rgba(255,255,255,.2)!important;font-family:var(--mono);font-size:9px!important}
+.leaflet-bottom.leaflet-left{margin-bottom:96px}
+@media(max-width:640px){.leaflet-bottom.leaflet-left{margin-bottom:190px}}
 
-        /* Zombie marker pulse effect */
-        .zombie-pulse-ring {
-            border: 2px solid #ef4444;
-            border-radius: 50%;
-            height: 36px;
-            width: 36px;
-            position: absolute;
-            animation: zombiePulse 1.2s infinite ease-out;
-            opacity: 0;
-        }
-        @keyframes zombiePulse {
-            0% { transform: scale(0.4); opacity: 1; }
-            100% { transform: scale(1.8); opacity: 0; }
-        }
+/* ============================ GENERIC UI ============================ */
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);backdrop-filter:blur(18px) saturate(1.1);-webkit-backdrop-filter:blur(18px) saturate(1.1)}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px 10px;border-bottom:1px solid var(--line)}
+.card-head h3{margin:0;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:7px;font-weight:600}
+.card-head h3 i{color:var(--green)}
+.card-body{padding:12px 14px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border-radius:11px;padding:10px 14px;font-weight:600;font-size:13px;letter-spacing:.02em;border:1px solid var(--line-2);background:rgba(255,255,255,.045);color:var(--text);transition:transform .15s,background .15s,border-color .15s,box-shadow .15s}
+.btn:hover{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.26)}
+.btn:active{transform:scale(.97)}
+.btn-green{background:linear-gradient(120deg,#2ee383,#0f9d58);border-color:transparent;color:#03150b;box-shadow:0 8px 24px rgba(25,196,107,.28)}
+.btn-green:hover{background:linear-gradient(120deg,#5dffa8,#19c46b)}
+.btn-red{background:linear-gradient(120deg,#ff5b48,#e01f2f);border-color:transparent;color:#fff;box-shadow:0 8px 26px rgba(255,45,63,.3)}
+.btn-red:hover{background:linear-gradient(120deg,#ff7a63,#ff2d3f)}
+.btn-ghost{background:transparent;border-color:var(--line-2);color:var(--muted)}
+.btn-ghost:hover{color:var(--text)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+.icon-btn{width:38px;height:38px;border-radius:11px;display:inline-flex;align-items:center;justify-content:center;background:var(--panel);border:1px solid var(--line);color:var(--muted);box-shadow:0 8px 24px rgba(0,0,0,.35);backdrop-filter:blur(14px);transition:.15s}
+.icon-btn:hover{color:var(--text);border-color:var(--line-2);background:rgba(24,34,44,.94)}
+.icon-btn.on{color:var(--green);border-color:rgba(109,255,168,.4);box-shadow:0 0 18px rgba(109,255,168,.18)}
+.input{width:100%;background:rgba(255,255,255,.045);border:1px solid var(--line-2);border-radius:10px;padding:10px 12px;font-size:13px;outline:none;transition:.15s;min-width:0}
+.input::placeholder{color:var(--dim);letter-spacing:.08em;font-size:11px;text-transform:uppercase}
+.input:focus{border-color:rgba(109,255,168,.55);box-shadow:0 0 0 3px rgba(109,255,168,.1)}
+.kbd{display:inline-block;padding:1px 5px;border-radius:5px;background:rgba(255,255,255,.07);border:1px solid var(--line-2);font-family:var(--mono);font-size:10px;color:var(--muted)}
 
-        /* Red flash overlay for imminent danger */
-        .danger-flash {
-            animation: flashBorder 0.8s infinite alternate;
-        }
-        @keyframes flashBorder {
-            0% { box-shadow: inset 0 0 10px rgba(239, 68, 68, 0.2); }
-            100% { box-shadow: inset 0 0 50px rgba(239, 68, 68, 0.85); }
-        }
+/* ============================ TOP BAR ============================ */
+#topbar{position:fixed;top:calc(10px + env(safe-area-inset-top));left:12px;right:12px;z-index:40;display:flex;align-items:center;gap:10px;flex-wrap:wrap;pointer-events:none}
+#topbar>*{pointer-events:auto}
+.brand{display:flex;align-items:center;gap:10px;padding:7px 14px 7px 8px;border-radius:14px;background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow);backdrop-filter:blur(16px)}
+.brand-mark{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 30% 25%,rgba(255,77,94,.35),rgba(255,45,63,.08));border:1px solid rgba(255,77,94,.4);color:var(--red);font-size:17px;box-shadow:inset 0 0 16px rgba(255,45,63,.18)}
+.brand-title{display:block;font-size:15px;font-weight:700;letter-spacing:.2em;line-height:1}
+.brand-sub{display:block;font-size:8px;letter-spacing:.24em;color:var(--dim);margin-top:4px;text-transform:uppercase}
+.top-stats{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+.hud-chip{display:flex;align-items:center;gap:8px;height:38px;padding:0 12px;border-radius:11px;background:var(--panel);border:1px solid var(--line);box-shadow:var(--shadow);backdrop-filter:blur(16px);font-size:12px}
+.hp-chip i{color:var(--red);font-size:12px}
+.hp-track{width:86px;height:6px;border-radius:99px;background:rgba(255,255,255,.09);overflow:hidden}
+.hp-fill{height:100%;width:100%;border-radius:99px;background:linear-gradient(90deg,#ff4d5e,#6dffa8);transition:width .3s,background .3s}
+.hp-fill.warn{background:linear-gradient(90deg,#ff8a3d,#ffb648)}
+.hp-fill.crit{background:linear-gradient(90deg,#ff2d3f,#ff6b78);animation:hpPulse .8s infinite alternate}
+@keyframes hpPulse{from{filter:brightness(.8)}to{filter:brightness(1.5)}}
+.hp-num{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--muted);min-width:24px;text-align:right}
+.score-chip i{color:var(--amber)}
+.score-chip .score{font-family:var(--mono);font-weight:700;color:var(--amber);font-size:13px}
+.room-chip{cursor:default}
+.room-chip .dot{width:6px;height:6px;border-radius:50%;background:var(--dim)}
+.room-chip.live .dot{background:var(--green);box-shadow:0 0 8px var(--green);animation:dotPulse 1.6s infinite}
+.room-chip.connecting .dot{background:var(--amber);animation:dotPulse .8s infinite}
+.room-chip .room-label{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--muted);max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@keyframes dotPulse{0%,100%{opacity:1}50%{opacity:.35}}
+.squad-chip{border-color:rgba(79,227,255,.35);color:var(--cyan);font-family:var(--mono);font-size:10px;letter-spacing:.08em;background:rgba(10,32,40,.86)}
+.top-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
 
-        /* Virtual Joystick Styles */
-        .joystick-base {
-            width: 100px;
-            height: 100px;
-            background: rgba(15, 23, 42, 0.75);
-            border: 2px solid rgba(16, 185, 129, 0.5);
-            border-radius: 50%;
-            position: relative;
-            touch-action: none;
-            backdrop-filter: blur(8px);
-        }
-        .joystick-stick {
-            width: 40px;
-            height: 40px;
-            background: #10b981;
-            border-radius: 50%;
-            position: absolute;
-            top: 30px;
-            left: 30px;
-            box-shadow: 0 0 10px rgba(16, 185, 129, 0.8);
-            transition: background-color 0.2s;
-        }
+/* ============================ SIDE PANELS ============================ */
+.side-panel{position:fixed;top:72px;width:272px;z-index:35;display:flex;flex-direction:column;gap:10px;max-height:calc(100vh - 180px);overflow:auto;scrollbar-width:none}
+.side-panel::-webkit-scrollbar{display:none}
+#panel-left{left:12px}
+#panel-right{right:12px}
+.objective{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dashed rgba(255,255,255,.07)}
+.objective:last-child{border-bottom:none;padding-bottom:0}
+.objective:first-child{padding-top:0}
+.obj-icon{width:30px;height:30px;flex:0 0 30px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:12px;background:rgba(255,255,255,.05);border:1px solid var(--line)}
+.obj-icon.green{color:var(--green);background:rgba(109,255,168,.08);border-color:rgba(109,255,168,.18)}
+.obj-icon.red{color:var(--red);background:rgba(255,77,94,.08);border-color:rgba(255,77,94,.2)}
+.obj-icon.cyan{color:var(--cyan);background:rgba(79,227,255,.08);border-color:rgba(79,227,255,.18)}
+.obj-main{flex:1;min-width:0}
+.obj-label{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.obj-value{font-family:var(--mono);font-size:14px;font-weight:700;margin-top:1px}
+.progress{height:5px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:6px}
+.progress>div{height:100%;border-radius:99px;background:linear-gradient(90deg,#19c46b,#6dffa8);transition:width .3s}
+.radar{display:flex;align-items:center;gap:12px}
+.radar-ring{width:54px;height:54px;flex:0 0 54px;border-radius:50%;border:1px solid rgba(255,77,94,.3);position:relative;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle,rgba(255,77,94,.1),transparent 70%)}
+.radar-ring::before,.radar-ring::after{content:'';position:absolute;border-radius:50%;border:1px solid rgba(255,77,94,.16)}
+.radar-ring::before{inset:9px}
+.radar-ring::after{inset:18px}
+.radar-sweep{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 0deg,rgba(255,77,94,.4),transparent 70deg);animation:radarSpin 3s linear infinite;opacity:.5}
+@keyframes radarSpin{to{transform:rotate(360deg)}}
+.radar-blip{position:relative;z-index:1;width:7px;height:7px;border-radius:50%;background:var(--red);box-shadow:0 0 10px var(--red)}
+.radar-read{flex:1;min-width:0}
+.radar-dist{font-family:var(--mono);font-size:19px;font-weight:700;line-height:1.1}
+.radar-sub{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin-top:3px}
+.legend{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;font-size:10px;color:var(--muted)}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend i{font-size:7px}
+.legend .l-player{color:var(--green)}
+.legend .l-zombie{color:var(--red)}
+.legend .l-supply{color:var(--cyan)}
+.legend .l-remote{color:var(--violet)}
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #111827;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #374151;
-            border-radius: 3px;
-        }
-    </style>
+/* scoreboard */
+.tabs{display:flex;gap:2px;padding:2px;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid var(--line)}
+.tab{padding:4px 9px;border-radius:6px;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);font-weight:600}
+.tab.active{background:rgba(109,255,168,.14);color:var(--green)}
+.room-status{display:flex;align-items:center;gap:6px;padding:8px 14px 0;font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.room-status .dot{width:5px;height:5px;border-radius:50%;background:var(--dim)}
+.room-status.live{color:var(--green)}
+.room-status.live .dot{background:var(--green);box-shadow:0 0 6px var(--green)}
+.room-status.connecting{color:var(--amber)}
+.room-status.connecting .dot{background:var(--amber);animation:dotPulse .8s infinite}
+.score-list{list-style:none;margin:0;padding:6px 8px 4px;display:flex;flex-direction:column;gap:2px;max-height:236px;overflow:auto}
+.score-row{display:grid;grid-template-columns:18px 1fr auto;gap:8px;align-items:center;padding:6px 7px;border-radius:8px;border:1px solid transparent}
+.score-row.me{background:rgba(109,255,168,.07);border-color:rgba(109,255,168,.16)}
+.score-row .rank{font-family:var(--mono);font-size:10px;color:var(--dim);text-align:center}
+.score-row:nth-child(1) .rank{color:var(--amber)}
+.score-row .who{min-width:0}
+.score-row .nm{font-size:11.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:5px}
+.score-row .nm .you{font-size:8px;letter-spacing:.1em;color:var(--green);border:1px solid rgba(109,255,168,.3);border-radius:4px;padding:0 3px}
+.score-row .sub{font-family:var(--mono);font-size:8.5px;color:var(--dim);margin-top:1px}
+.score-row .pts{font-family:var(--mono);font-size:11.5px;font-weight:700;color:var(--amber)}
+.score-empty{padding:14px 10px;text-align:center;font-size:10.5px;color:var(--dim);line-height:1.5}
+.room-join{display:flex;gap:6px;padding:8px 10px 0}
+.room-join .input{height:32px;font-size:11px;font-family:var(--mono);letter-spacing:.1em}
+.room-join .btn{height:32px;padding:0 11px;font-size:10px;letter-spacing:.08em;text-transform:uppercase}
+.room-hint{padding:7px 12px 12px;font-size:9px;line-height:1.5;color:var(--dim)}
+.room-hint b{color:var(--muted);font-weight:600}
+.sheet-close{display:none;position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:9px;align-items:center;justify-content:center;background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--muted);z-index:2}
+#sheet-scrim{display:none;position:fixed;inset:0;z-index:105;background:rgba(3,6,9,.6);backdrop-filter:blur(3px)}
+#panel-right.open{z-index:110;box-shadow:0 0 0 1px rgba(109,255,168,.25),var(--shadow)}
+#sheet-scrim.show{display:block}
+
+/* ============================ THREAT BANNER ============================ */
+#threat-banner{position:fixed;top:64px;left:50%;transform:translateX(-50%);z-index:45;display:flex;align-items:center;gap:11px;padding:9px 16px 9px 10px;border-radius:12px;border:1px solid rgba(255,77,94,.55);background:linear-gradient(100deg,rgba(58,8,14,.95),rgba(28,8,11,.94));box-shadow:0 0 34px rgba(255,45,63,.25),var(--shadow);overflow:hidden;max-width:92vw}
+#threat-banner::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(45deg,transparent 0 10px,rgba(255,77,94,.07) 10px 20px);pointer-events:none}
+.threat-icon{width:32px;height:32px;flex:0 0 32px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:rgba(255,77,94,.16);color:var(--red);font-size:14px;animation:threatBlink 1s infinite alternate;position:relative}
+@keyframes threatBlink{from{opacity:.55}to{opacity:1}}
+.threat-title{font-size:10px;font-weight:700;letter-spacing:.18em;color:#ffb8bf;text-transform:uppercase;position:relative}
+.threat-sub{font-family:var(--mono);font-size:12px;font-weight:700;color:#fff;margin-top:1px;position:relative}
+#threat-banner.crit{border-color:rgba(255,45,63,.9);animation:critShake .35s infinite alternate}
+@keyframes critShake{from{transform:translateX(-50%)}to{transform:translateX(calc(-50% + 2px))}}
+
+/* ============================ BOTTOM HUD ============================ */
+#hud-bottom{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));z-index:38;pointer-events:none}
+.hud-bar{display:flex;align-items:stretch;background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);backdrop-filter:blur(18px) saturate(1.1);overflow:hidden;pointer-events:auto}
+.speed-cell{flex:0 0 158px;padding:10px 16px;background:linear-gradient(160deg,rgba(109,255,168,.08),transparent 70%);border-right:1px solid var(--line);display:flex;flex-direction:column;justify-content:center}
+.speed-top{display:flex;align-items:baseline;gap:5px}
+.speed-num{font-family:var(--mono);font-size:26px;font-weight:700;line-height:1;color:var(--green);text-shadow:0 0 18px rgba(109,255,168,.35)}
+.speed-unit{font-size:9px;letter-spacing:.16em;color:var(--dim);font-weight:600}
+.speed-track{height:4px;border-radius:99px;background:rgba(255,255,255,.09);margin-top:8px;overflow:hidden}
+.speed-track>div{height:100%;width:0%;border-radius:99px;background:linear-gradient(90deg,#19c46b,#6dffa8);transition:width .25s}
+.metric{flex:1;min-width:0;padding:10px 13px;border-right:1px solid var(--line);display:flex;flex-direction:column;justify-content:center;gap:3px}
+.metric:last-child{border-right:none}
+.metric .label{font-size:8px;letter-spacing:.15em;text-transform:uppercase;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.metric .value{font-family:var(--mono);font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.metric .value.green{color:var(--green)}
+.metric .value.amber{color:var(--amber)}
+.metric .value.red{color:var(--red)}
+.metric .value.cyan{color:var(--cyan)}
+
+/* ============================ JOYSTICK / SIM ============================ */
+#joystick{position:fixed;right:18px;bottom:calc(104px + env(safe-area-inset-bottom));z-index:42;display:flex;flex-direction:column;align-items:center;gap:6px;touch-action:none}
+#joystick .joy-label{font-family:var(--mono);font-size:8px;letter-spacing:.14em;color:var(--green);background:rgba(8,14,20,.86);border:1px solid rgba(109,255,168,.25);padding:2px 7px;border-radius:5px}
+.joy-base{width:118px;height:118px;border-radius:50%;background:radial-gradient(circle,rgba(13,22,30,.9),rgba(6,10,14,.85));border:1px solid rgba(109,255,168,.3);box-shadow:0 12px 34px rgba(0,0,0,.5),inset 0 0 30px rgba(109,255,168,.06);position:relative;touch-action:none}
+.joy-base::before,.joy-base::after{content:'';position:absolute;background:rgba(255,255,255,.06)}
+.joy-base::before{left:50%;top:14px;bottom:14px;width:1px}
+.joy-base::after{top:50%;left:14px;right:14px;height:1px}
+.joy-stick{width:46px;height:46px;border-radius:50%;position:absolute;left:36px;top:36px;background:radial-gradient(circle at 35% 30%,#b9ffd6,#6dffa8 45%,#19c46b);box-shadow:0 0 20px rgba(109,255,168,.5),inset 0 -3px 8px rgba(0,0,0,.25);pointer-events:none}
+#sim-hint{position:fixed;left:12px;bottom:calc(104px + env(safe-area-inset-bottom));z-index:40;max-width:230px;padding:9px 12px;border-radius:11px;background:rgba(8,14,20,.9);border:1px solid rgba(255,182,72,.3);font-size:10px;line-height:1.5;color:var(--muted);box-shadow:var(--shadow);backdrop-filter:blur(12px)}
+#sim-hint b{color:var(--amber)}
+
+/* ============================ MODALS ============================ */
+.modal{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;padding:14px;background:rgba(3,6,9,.74);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.modal.open{display:flex}
+.modal-card{width:min(780px,100%);max-height:93vh;overflow:auto;background:linear-gradient(170deg,rgba(17,24,32,.98),rgba(9,14,20,.99));border:1px solid var(--line-2);border-radius:20px;box-shadow:0 40px 100px rgba(0,0,0,.7);position:relative}
+.modal-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--red),var(--amber),transparent);opacity:.7}
+.setup-head{padding:26px 26px 16px;text-align:center}
+.setup-mark{width:56px;height:56px;margin:0 auto 12px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--red);background:radial-gradient(circle at 30% 25%,rgba(255,77,94,.28),rgba(255,45,63,.05));border:1px solid rgba(255,77,94,.35);box-shadow:0 0 40px rgba(255,45,63,.18),inset 0 0 20px rgba(255,45,63,.1)}
+.setup-head h1{margin:0;font-size:clamp(22px,4vw,30px);font-weight:700;letter-spacing:.22em;line-height:1.1}
+.setup-head h1 span{color:var(--red)}
+.setup-head p{margin:7px 0 0;font-size:11px;letter-spacing:.06em;color:var(--muted)}
+.setup-chips{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin-top:12px}
+.mini-chip{font-family:var(--mono);font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;padding:3px 7px;border-radius:5px;background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--dim);display:inline-flex;align-items:center;gap:4px}
+.mini-chip i{font-size:8px}
+.mini-chip.ok{color:var(--green);border-color:rgba(109,255,168,.25)}
+.mini-chip.warn{color:var(--amber);border-color:rgba(255,182,72,.25)}
+.setup-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 20px 16px}
+.step{background:rgba(255,255,255,.025);border:1px solid var(--line);border-radius:13px;padding:13px}
+.step.wide{grid-column:1/-1}
+.step-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.step-num{font-family:var(--mono);font-size:9px;font-weight:700;color:var(--green);background:rgba(109,255,168,.1);border:1px solid rgba(109,255,168,.25);border-radius:5px;padding:2px 5px}
+.step-head h4{margin:0;font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.step-status{margin-left:auto;font-family:var(--mono);font-size:8.5px;letter-spacing:.06em;color:var(--dim);text-transform:lowercase}
+.step-status.ok{color:var(--green)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.zone-read{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:7px}
+.zone-read .big{font-family:var(--mono);font-size:19px;font-weight:700;color:var(--cyan)}
+.zone-read .sub{font-size:9px;color:var(--dim);letter-spacing:.06em}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:5px;border-radius:99px;background:linear-gradient(90deg,rgba(79,227,255,.5),rgba(109,255,168,.35));outline:none;margin:4px 0 7px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#d9fff0;border:2px solid var(--cyan);box-shadow:0 0 12px rgba(79,227,255,.6);cursor:pointer}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:#d9fff0;border:2px solid var(--cyan);box-shadow:0 0 12px rgba(79,227,255,.6);cursor:pointer}
+.presets{display:flex;gap:5px}
+.preset{flex:1;padding:4px 2px;border-radius:6px;font-family:var(--mono);font-size:9px;color:var(--dim);border:1px solid var(--line);background:rgba(255,255,255,.03)}
+.preset:hover{color:var(--text);border-color:var(--line-2)}
+.preset.active{color:var(--cyan);border-color:rgba(79,227,255,.4);background:rgba(79,227,255,.08)}
+.pace{display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px;border-radius:9px;border:1px solid var(--line);background:rgba(255,255,255,.03);transition:.15s}
+.pace i{font-size:13px;color:var(--dim);transition:.15s}
+.pace .nm{font-size:10.5px;font-weight:600;letter-spacing:.04em}
+.pace .sp{font-family:var(--mono);font-size:8.5px;color:var(--dim)}
+.pace:hover{border-color:var(--line-2);background:rgba(255,255,255,.06)}
+.pace.active{border-color:rgba(255,77,94,.55);background:rgba(255,77,94,.09);box-shadow:inset 0 0 18px rgba(255,77,94,.08)}
+.pace.active i,.pace.active .nm{color:var(--red)}
+.pace.active .sp{color:#ffa3ab}
+.setup-foot{display:flex;align-items:center;gap:12px;padding:0 20px 20px}
+#setup-status{flex:1;font-size:10px;line-height:1.4;color:var(--dim);min-width:0}
+#setup-status.ok{color:var(--green)}
+#setup-status.warn{color:var(--amber)}
+#btn-start{min-width:210px;padding:14px 20px;font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:700}
+
+/* game over */
+.end-card{width:min(430px,100%);text-align:center;padding:28px 24px 22px}
+.end-icon{width:66px;height:66px;margin:0 auto 12px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;border:1px solid rgba(255,77,94,.35);background:radial-gradient(circle,rgba(255,77,94,.16),transparent 70%);color:var(--red)}
+.end-icon.win{color:var(--green);border-color:rgba(109,255,168,.35);background:radial-gradient(circle,rgba(109,255,168,.16),transparent 70%)}
+.end-card h2{margin:0;font-size:22px;letter-spacing:.16em;text-transform:uppercase;color:var(--red)}
+.end-card h2.win{color:var(--green)}
+.end-sub{margin:6px 0 0;font-size:11px;color:var(--muted);line-height:1.5}
+.new-best{display:inline-flex;align-items:center;gap:5px;margin-top:10px;padding:4px 10px;border-radius:99px;background:rgba(255,182,72,.1);border:1px solid rgba(255,182,72,.35);color:var(--amber);font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;animation:bestGlow 1.4s infinite alternate}
+@keyframes bestGlow{from{box-shadow:0 0 0 rgba(255,182,72,0)}to{box-shadow:0 0 18px rgba(255,182,72,.3)}}
+.end-stats{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:16px 0;text-align:left}
+.end-stat{padding:9px 11px;border-radius:9px;background:rgba(255,255,255,.03);border:1px solid var(--line)}
+.end-stat .k{font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.end-stat .v{font-family:var(--mono);font-size:15px;font-weight:700;margin-top:2px}
+.end-actions{display:grid;grid-template-columns:1fr;gap:7px}
+.end-actions .row{grid-template-columns:1fr 1fr}
+
+/* toasts */
+#toasts{position:fixed;left:50%;bottom:calc(112px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:120;display:flex;flex-direction:column-reverse;align-items:center;gap:6px;pointer-events:none;width:max-content;max-width:92vw}
+.toast{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:18px;background:rgba(10,16,22,.94);border:1px solid var(--line-2);box-shadow:var(--shadow);font-size:11px;font-weight:600;color:var(--text);opacity:0;transform:translateY(8px) scale(.96);transition:.25s;backdrop-filter:blur(12px);max-width:100%;text-align:left}
+.toast span{min-width:0;word-break:break-word}
+.toast.show{opacity:1;transform:none}
+.toast i{font-size:11px}
+.toast.good{border-color:rgba(109,255,168,.35);color:#c6ffdf}
+.toast.good i{color:var(--green)}
+.toast.warn{border-color:rgba(255,182,72,.4);color:#ffe3b0}
+.toast.warn i{color:var(--amber)}
+.toast.bad{border-color:rgba(255,77,94,.45);color:#ffc9ce}
+.toast.bad i{color:var(--red)}
+.toast.info i{color:var(--cyan)}
+#damage-flash{position:fixed;inset:0;z-index:3;pointer-events:none;background:radial-gradient(ellipse at center,transparent 40%,rgba(255,20,40,.5) 100%);opacity:0;transition:opacity .35s}
+#damage-flash.hit{opacity:1;transition:opacity .05s}
+
+/* pick + draw */
+#pick-banner,#draw-toolbar{position:fixed;top:64px;left:50%;transform:translateX(-50%);z-index:60;display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:12px;background:rgba(8,20,26,.95);border:1px solid rgba(79,227,255,.4);box-shadow:var(--shadow);font-size:11px;color:var(--cyan);max-width:94vw;flex-wrap:wrap;justify-content:center}
+#pick-banner .btn,#draw-toolbar .btn{padding:5px 10px;font-size:10px;border-radius:7px}
+#draw-toolbar{flex-wrap:nowrap;gap:6px}
+#draw-toolbar .draw-msg{font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vertex-dot{width:12px;height:12px;border-radius:50%;background:#0a1418;border:2px solid var(--cyan);box-shadow:0 0 8px rgba(79,227,255,.6)}
+
+/* marker styles */
+.player-marker{display:flex;align-items:center;justify-content:center;position:relative}
+.player-core{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 32% 28%,#c9ffe1,#6dffa8 48%,#12a35a);border:2px solid rgba(255,255,255,.92);color:#03150b;font-size:14px;box-shadow:0 0 0 4px rgba(109,255,168,.16),0 0 26px rgba(109,255,168,.55);position:relative;z-index:2}
+.player-pulse{position:absolute;width:34px;height:34px;border-radius:50%;border:2px solid rgba(109,255,168,.7);animation:playerPulse 2s infinite ease-out}
+@keyframes playerPulse{0%{transform:scale(1);opacity:.8}100%{transform:scale(2.8);opacity:0}}
+.home-marker{display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:8px;background:rgba(8,14,20,.9);border:1px solid rgba(79,227,255,.5);color:var(--cyan);font-size:11px;box-shadow:0 0 14px rgba(79,227,255,.25)}
+.zombie-marker{display:flex;align-items:center;justify-content:center;position:relative}
+.zombie-core{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 35% 30%,#5a1018,#2a0509 70%);border:2px solid #ff4d5e;color:#ff6b78;font-size:12px;box-shadow:0 0 18px rgba(255,45,63,.45),inset 0 0 10px rgba(255,45,63,.2);position:relative;z-index:2}
+.zombie-ring{position:absolute;width:30px;height:30px;border-radius:50%;border:1.5px solid rgba(255,77,94,.8);animation:zombiePulse 1.3s infinite ease-out}
+@keyframes zombiePulse{0%{transform:scale(1);opacity:.9}100%{transform:scale(2.4);opacity:0}}
+.supply-marker{display:flex;align-items:center;justify-content:center}
+.supply-core{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:rgba(8,16,22,.95);border:1px solid var(--c,#4fe3ff);color:var(--c,#4fe3ff);font-size:12px;box-shadow:0 0 16px color-mix(in srgb,var(--c,#4fe3ff) 40%,transparent);animation:supplyFloat 2.4s ease-in-out infinite}
+@keyframes supplyFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+.remote-marker{display:flex;align-items:center;gap:5px;transform:translate(-50%,-50%);position:relative}
+.remote-dot{width:13px;height:13px;border-radius:50%;background:var(--c,#b18cff);border:2px solid rgba(255,255,255,.85);box-shadow:0 0 12px var(--c,#b18cff);flex:0 0 13px}
+.remote-name{font-family:var(--ui);font-size:9px;font-weight:600;color:#fff;background:rgba(6,10,14,.8);border:1px solid rgba(255,255,255,.14);padding:1px 5px;border-radius:4px;white-space:nowrap;max-width:96px;overflow:hidden;text-overflow:ellipsis}
+.remote-marker.down{opacity:.45;filter:grayscale(1)}
+.zone-flag{display:flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:rgba(79,227,255,.15);border:1px solid var(--cyan);color:var(--cyan);font-size:8px}
+
+/* ============================ RESPONSIVE ============================ */
+@media(max-width:1100px){
+  #panel-left{display:none}
+  #panel-right{top:0;right:0;bottom:0;width:min(330px,90vw);max-height:none;padding:56px 10px 14px;background:rgba(5,9,13,.92);backdrop-filter:blur(20px);transform:translateX(104%);transition:transform .28s cubic-bezier(.22,1,.36,1);z-index:70;overflow:auto}
+  #panel-right.open{transform:none}
+  #panel-right .sheet-close{display:flex}
+  #sheet-scrim.show{display:block}
+  .brand-sub{display:none}
+  .brand{padding:6px 10px 6px 6px}
+}
+@media(max-width:720px){
+  #topbar{top:calc(8px + env(safe-area-inset-top));left:8px;right:8px;gap:6px}
+  .brand-mark{width:32px;height:32px;font-size:15px}
+  .brand-title{font-size:12px;letter-spacing:.14em}
+  .brand{padding:6px 9px 6px 6px}
+  .top-stats{gap:6px;order:3;flex-basis:100%;overflow:auto;scrollbar-width:none}
+  .top-stats::-webkit-scrollbar{display:none}
+  .hud-chip{height:34px;padding:0 10px;flex:0 0 auto}
+  .hp-track{width:64px}
+  .top-actions{gap:6px}
+  .icon-btn{width:34px;height:34px;border-radius:9px}
+  .top-actions .hide-sm{display:none}
+  #threat-banner{top:100px;padding:7px 12px 7px 8px;gap:8px}
+  .threat-icon{width:27px;height:27px;flex-basis:27px;font-size:12px}
+  .threat-title{font-size:8.5px}
+  .threat-sub{font-size:10.5px}
+  #hud-bottom{left:8px;right:8px;bottom:calc(8px + env(safe-area-inset-bottom))}
+  .hud-bar{flex-wrap:wrap}
+  .speed-cell{flex:1 1 100%;border-right:none;border-bottom:1px solid var(--line);flex-direction:row;align-items:center;gap:12px;padding:8px 12px}
+  .speed-top{flex:0 0 auto}
+  .speed-num{font-size:22px}
+  .speed-track{flex:1;margin-top:0}
+  .metric{flex:1 1 33.333%;padding:7px 9px;border-bottom:1px solid var(--line)}
+  .metric:nth-last-child(-n+3){border-bottom:none}
+  .metric .value{font-size:12px}
+  #joystick{bottom:calc(158px + env(safe-area-inset-bottom));right:12px}
+  .joy-base{width:104px;height:104px}
+  .joy-stick{width:42px;height:42px;left:31px;top:31px}
+  #sim-hint{bottom:calc(158px + env(safe-area-inset-bottom));left:8px;max-width:180px;font-size:9px}
+  #toasts{bottom:calc(162px + env(safe-area-inset-bottom))}
+  .leaflet-bottom.leaflet-left{margin-bottom:190px}
+  .setup-grid{grid-template-columns:1fr;padding:0 12px 12px}
+  .step.wide{grid-column:auto}
+  .setup-head{padding:20px 16px 14px}
+  .setup-foot{flex-direction:column;align-items:stretch;padding:0 12px 14px;gap:8px}
+  #btn-start{width:100%;min-width:0}
+  .modal{padding:8px}
+  .modal-card{max-height:96vh;border-radius:16px}
+  .end-card{padding:22px 16px 16px}
+  .leaflet-control-zoom{margin-top:110px!important}
+  #pick-banner,#draw-toolbar{top:104px}
+  #draw-toolbar .draw-msg{font-size:9.5px}
+}
+@media(max-width:400px){
+  .brand-title{display:none}
+  .room-chip .room-label{max-width:56px}
+}
+</style>
 </head>
-<body class="text-slate-100 flex flex-col relative">
+<body>
 
-    <!-- Screen Flash Overlay on Danger -->
-    <div id="danger-overlay" class="pointer-events-none absolute inset-0 z-20 transition-all duration-300"></div>
+<div id="map"></div>
+<div class="map-grade"></div>
+<div id="damage-flash"></div>
 
-    <!-- MAIN MAP -->
-    <div id="map"></div>
+<!-- ============================ TOP BAR ============================ -->
+<header id="topbar">
+  <div class="brand">
+    <div class="brand-mark"><i class="fa-solid fa-biohazard"></i></div>
+    <div>
+      <span class="brand-title">Z-RUN</span>
+      <span class="brand-sub">Outbreak Protocol</span>
+    </div>
+  </div>
 
-    <!-- TOP HUD BAR -->
-    <div id="hud-top" class="absolute top-3 left-3 right-3 z-10 flex flex-wrap justify-between items-center gap-2 pointer-events-none">
-        <!-- Status & Stats -->
-        <div class="bg-slate-900/90 backdrop-blur-md border border-slate-700/60 rounded-xl px-4 py-2.5 shadow-2xl flex items-center space-x-4 pointer-events-auto">
-            <div class="flex items-center space-x-2">
-                <i class="fa-solid fa-heart-pulse text-red-500 text-lg animate-pulse"></i>
-                <div class="w-24 bg-slate-800 rounded-full h-3 border border-slate-700 overflow-hidden">
-                    <div id="hp-bar" class="bg-gradient-to-r from-red-600 to-emerald-500 h-full w-full transition-all duration-300"></div>
-                </div>
-                <span id="hp-text" class="text-xs font-mono font-bold text-slate-200">100 HP</span>
-            </div>
-            
-            <div class="h-6 w-px bg-slate-700"></div>
+  <div class="top-stats">
+    <div class="hud-chip hp-chip" title="Health">
+      <i class="fa-solid fa-heart-pulse"></i>
+      <div class="hp-track"><div id="hp-bar" class="hp-fill"></div></div>
+      <span id="hp-text" class="hp-num">100</span>
+    </div>
+    <div class="hud-chip score-chip" title="Score">
+      <i class="fa-solid fa-trophy"></i>
+      <span id="hud-score" class="score">0</span>
+    </div>
+    <div id="room-chip" class="hud-chip room-chip" title="Live room">
+      <span class="dot"></span>
+      <span id="room-chip-label" class="room-label">SOLO</span>
+    </div>
+    <div id="squad-chip" class="hud-chip squad-chip hidden" title="Squad link active">
+      <i class="fa-solid fa-link"></i><span>SQUAD</span>
+    </div>
+  </div>
 
-            <div class="flex items-center space-x-1 text-emerald-400 font-mono text-sm font-bold">
-                <i class="fa-solid fa-trophy text-amber-400"></i>
-                <span id="hud-score">0</span> pts
-            </div>
+  <div class="top-actions">
+    <button id="btn-recenter" class="icon-btn hide-sm" title="Recenter map" type="button"><i class="fa-solid fa-crosshairs"></i></button>
+    <button id="btn-leaderboard" class="icon-btn" title="Leaderboard" type="button"><i class="fa-solid fa-ranking-star"></i></button>
+    <button id="btn-audio" class="icon-btn" title="Toggle audio" type="button"><i id="audio-icon" class="fa-solid fa-volume-high"></i></button>
+    <button id="btn-sim" class="icon-btn" title="Toggle simulation mode" type="button"><i class="fa-solid fa-gamepad"></i></button>
+    <button id="btn-menu" class="icon-btn" title="Scores" type="button" style="display:none"><i class="fa-solid fa-bars"></i></button>
+  </div>
+</header>
+
+<!-- ============================ THREAT BANNER ============================ -->
+<div id="threat-banner" class="hidden">
+  <div class="threat-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+  <div>
+    <div class="threat-title">Horde Proximity Warning</div>
+    <div id="threat-text" class="threat-sub">NEAREST —</div>
+  </div>
+</div>
+
+<!-- ============================ LEFT PANEL ============================ -->
+<aside id="panel-left" class="side-panel">
+  <section class="card">
+    <div class="card-head"><h3><i class="fa-solid fa-list-check"></i> Mission</h3><span id="mission-wave" class="mini-chip">WAVE 1</span></div>
+    <div class="card-body">
+      <div class="objective">
+        <div class="obj-icon cyan"><i class="fa-solid fa-box-open"></i></div>
+        <div class="obj-main">
+          <div class="obj-label">Supply caches</div>
+          <div class="obj-value"><span id="obj-supplies">0</span><span style="color:var(--dim);font-size:10px"> / 0</span></div>
+          <div class="progress"><div id="obj-progress" style="width:0%"></div></div>
         </div>
-
-        <!-- System Controls -->
-        <div class="flex items-center gap-2 pointer-events-auto">
-            <button id="audio-toggle-btn" class="bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-slate-300 p-2.5 rounded-xl shadow-lg transition">
-                <i id="audio-icon" class="fa-solid fa-volume-high text-emerald-400"></i>
-            </button>
-            <button id="sim-mode-btn" class="bg-slate-900/90 hover:bg-slate-800 border border-slate-700 text-xs text-amber-400 font-semibold px-3 py-2.5 rounded-xl shadow-lg flex items-center space-x-1.5 transition">
-                <i class="fa-solid fa-gamepad"></i>
-                <span id="sim-mode-text">GPS Mode</span>
-            </button>
+      </div>
+      <div class="objective">
+        <div class="obj-icon red"><i class="fa-solid fa-biohazard"></i></div>
+        <div class="obj-main">
+          <div class="obj-label">Horde on your trail</div>
+          <div class="obj-value" id="obj-horde">0</div>
         </div>
+      </div>
+      <div class="objective">
+        <div class="obj-icon green"><i class="fa-solid fa-person-running"></i></div>
+        <div class="obj-main">
+          <div class="obj-label">Distance covered</div>
+          <div class="obj-value" id="obj-distance">0.00 mi</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><h3><i class="fa-solid fa-satellite-dish"></i> Threat Radar</h3></div>
+    <div class="card-body">
+      <div class="radar">
+        <div class="radar-ring"><div class="radar-sweep"></div><div class="radar-blip"></div></div>
+        <div class="radar-read">
+          <div id="radar-dist" class="radar-dist">—</div>
+          <div id="radar-sub" class="radar-sub">No contacts</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><h3><i class="fa-solid fa-circle-info"></i> Field Guide</h3></div>
+    <div class="card-body legend">
+      <span><i class="fa-solid fa-circle l-player"></i> You</span>
+      <span><i class="fa-solid fa-circle l-zombie"></i> Infected</span>
+      <span><i class="fa-solid fa-square l-supply"></i> Supplies</span>
+      <span><i class="fa-solid fa-circle l-remote"></i> Squadmate</span>
+    </div>
+  </section>
+</aside>
+
+<!-- ============================ RIGHT PANEL / SCOREBOARD ============================ -->
+<aside id="panel-right" class="side-panel">
+  <button id="sheet-close" class="sheet-close" type="button" aria-label="Close scores"><i class="fa-solid fa-xmark"></i></button>
+  <section class="card">
+    <div class="card-head">
+      <h3><i class="fa-solid fa-ranking-star"></i> Leaderboard</h3>
+      <div class="tabs">
+        <button class="tab active" data-tab="room" type="button">Room</button>
+        <button class="tab" data-tab="local" type="button">Local</button>
+      </div>
+    </div>
+    <div id="room-status" class="room-status"><span class="dot"></span><span id="room-status-text">Solo run</span></div>
+    <ol id="score-list" class="score-list"></ol>
+    <div class="room-join">
+      <input id="room-input-panel" class="input" placeholder="Room code" maxlength="10" autocomplete="off" spellcheck="false">
+      <button id="btn-join-room" class="btn btn-ghost" type="button">Join</button>
+    </div>
+    <div class="room-join" style="padding-top:6px">
+      <button id="btn-invite" class="btn btn-ghost" type="button" style="flex:1;height:30px;font-size:9.5px;letter-spacing:.06em"><i class="fa-solid fa-link"></i> Copy invite link</button>
+    </div>
+    <div class="room-hint">Run together, or race for the top spot. Live positions are relayed through a public broker — <b>use a private room code</b>.</div>
+  </section>
+</aside>
+<div id="sheet-scrim"></div>
+
+<!-- ============================ BOTTOM HUD ============================ -->
+<footer id="hud-bottom" class="hidden">
+  <div class="hud-bar">
+    <div class="speed-cell">
+      <div class="speed-top"><span id="hud-speed" class="speed-num">0.0</span><span class="speed-unit">MPH</span></div>
+      <div class="speed-track"><div id="speed-fill"></div></div>
+    </div>
+    <div class="metric"><span class="label">Distance</span><span id="hud-distance" class="value">0.00 mi</span></div>
+    <div class="metric"><span class="label">Supplies</span><span id="hud-supplies" class="value cyan">0 / 0</span></div>
+    <div class="metric"><span class="label">Horde</span><span id="hud-zombies" class="value red">0</span></div>
+    <div class="metric"><span class="label">Wave</span><span id="hud-wave" class="value green">1</span></div>
+    <div class="metric"><span class="label">Time</span><span id="hud-time" class="value">0:00</span></div>
+  </div>
+</footer>
+
+<!-- ============================ JOYSTICK / SIM HINT ============================ -->
+<div id="joystick" class="hidden">
+  <span class="joy-label">TOUCH JOYSTICK</span>
+  <div id="joy-base" class="joy-base"><div id="joy-stick" class="joy-stick"></div></div>
+</div>
+<div id="sim-hint" class="hidden"><b>Simulation mode.</b> Drag the joystick, use <span class="kbd">W</span><span class="kbd">A</span><span class="kbd">S</span><span class="kbd">D</span>, or tap the map to move.</div>
+
+<!-- ============================ TOASTS ============================ -->
+<div id="toasts"></div>
+
+<!-- ============================ PICK / DRAW BANNERS ============================ -->
+<div id="pick-banner" class="hidden">
+  <i class="fa-solid fa-map-pin"></i>
+  <span>Tap the map to set your home base</span>
+  <button id="btn-pick-cancel" class="btn btn-ghost" type="button">Cancel</button>
+</div>
+<div id="draw-toolbar" class="hidden">
+  <span class="draw-msg"><i class="fa-solid fa-draw-polygon"></i> <span id="draw-count">0</span> corners placed</span>
+  <button id="btn-draw-undo" class="btn btn-ghost" type="button">Undo</button>
+  <button id="btn-draw-finish" class="btn btn-green" type="button">Finish</button>
+  <button id="btn-draw-cancel" class="btn btn-ghost" type="button">Cancel</button>
+</div>
+
+<!-- ============================ SETUP MODAL ============================ -->
+<div id="setup-modal" class="modal open">
+  <div class="modal-card">
+    <div class="setup-head">
+      <div class="setup-mark"><i class="fa-solid fa-biohazard"></i></div>
+      <h1>Z-RUN <span>// OUTBREAK</span></h1>
+      <p>Real-world GPS survival running. Outrun the horde through streets, parks and fields.</p>
+      <div class="setup-chips">
+        <span class="mini-chip"><i class="fa-solid fa-lock"></i> HTTPS</span>
+        <span id="gps-chip" class="mini-chip warn"><i class="fa-solid fa-location-dot"></i> GPS pending</span>
+        <span class="mini-chip"><i class="fa-solid fa-person-running"></i> Miles &amp; MPH</span>
+      </div>
     </div>
 
-    <!-- GPS ERROR / FALLBACK NOTIFICATION BANNER -->
-    <div id="gps-error-banner" class="hidden absolute top-16 left-3 right-3 z-20 bg-amber-950/90 border border-amber-600/80 text-amber-200 p-3 rounded-xl backdrop-blur-md shadow-2xl flex items-center justify-between pointer-events-auto">
-        <div class="flex items-center space-x-2.5 text-xs">
-            <i class="fa-solid fa-triangle-exclamation text-amber-400 text-base"></i>
-            <div>
-                <div id="gps-error-title" class="font-bold">GPS Signal Unavailable</div>
-                <div id="gps-error-desc" class="text-[11px] text-amber-300/80">Switched to Manual Simulation Control. Use Joystick, WASD, or tap map.</div>
-            </div>
+    <div class="setup-grid">
+      <section class="step">
+        <div class="step-head"><span class="step-num">01</span><h4>Home Base</h4><span id="home-status" class="step-status">not set</span></div>
+        <div class="row">
+          <button id="btn-gps-home" class="btn btn-green" type="button"><i class="fa-solid fa-location-crosshairs"></i> Use GPS</button>
+          <button id="btn-map-home" class="btn btn-ghost" type="button"><i class="fa-solid fa-map-pin"></i> Pick on map</button>
         </div>
-        <button id="dismiss-gps-btn" class="bg-amber-800/80 hover:bg-amber-700 text-amber-100 text-xs px-2.5 py-1 rounded-lg">
-            Dismiss
-        </button>
+      </section>
+
+      <section class="step">
+        <div class="step-head"><span class="step-num">02</span><h4>Survival Zone</h4><span class="step-status">radius</span></div>
+        <div class="zone-read"><span id="radius-value" class="big">0.50 mi</span><span id="zone-across" class="sub">≈ 5,280 ft across</span></div>
+        <input id="radius-range" type="range" min="0.15" max="1.5" step="0.05" value="0.5" aria-label="Zone radius in miles">
+        <div class="presets">
+          <button class="preset" data-radius="0.25" type="button">0.25 mi</button>
+          <button class="preset active" data-radius="0.5" type="button">0.50 mi</button>
+          <button class="preset" data-radius="1.0" type="button">1.00 mi</button>
+        </div>
+        <div style="display:flex;gap:6px;margin-top:7px">
+          <button id="btn-draw-zone" class="btn btn-ghost" type="button" style="flex:1;padding:6px;font-size:10px"><i class="fa-solid fa-draw-polygon"></i> Draw custom zone</button>
+          <button id="btn-circle-zone" class="btn btn-ghost" type="button" style="flex:0 0 auto;padding:6px 9px;font-size:10px" title="Reset to circle"><i class="fa-solid fa-circle"></i></button>
+        </div>
+      </section>
+
+      <section class="step">
+        <div class="step-head"><span class="step-num">03</span><h4>Horde Pace</h4><span id="pace-status" class="step-status">jogger</span></div>
+        <div class="row3">
+          <button class="pace" data-mph="3.5" type="button"><i class="fa-solid fa-person-walking"></i><span class="nm">Walker</span><span class="sp">3.5 mph</span></button>
+          <button class="pace active" data-mph="5.5" type="button"><i class="fa-solid fa-person-running"></i><span class="nm">Jogger</span><span class="sp">5.5 mph</span></button>
+          <button class="pace" data-mph="7.5" type="button"><i class="fa-solid fa-bolt"></i><span class="nm">Runner</span><span class="sp">7.5 mph</span></button>
+        </div>
+        <p style="margin:9px 0 0;font-size:9px;line-height:1.45;color:var(--dim)">Infected travel roads, paths, parks and fields — never through houses or private property.</p>
+      </section>
+
+      <section class="step">
+        <div class="step-head"><span class="step-num">04</span><h4>Callsign &amp; Room</h4><span class="step-status">optional</span></div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <input id="name-input" class="input" placeholder="Callsign" maxlength="16" autocomplete="off" spellcheck="false">
+          <input id="room-input" class="input" placeholder="Room code (join friends)" maxlength="10" autocomplete="off" spellcheck="false">
+        </div>
+        <p style="margin:8px 0 0;font-size:9px;line-height:1.45;color:var(--dim)">Share a code to see squadmates live and compete on the room leaderboard. Leave blank for a solo run.</p>
+      </section>
     </div>
 
-    <!-- VIRTUAL JOYSTICK OVERLAY (For simulation/indoor testing) -->
-    <div id="joystick-container" class="hidden absolute bottom-24 right-4 z-20 pointer-events-auto flex flex-col items-center">
-        <span class="text-[10px] text-emerald-400 font-mono font-bold mb-1 bg-slate-900/80 px-2 py-0.5 rounded border border-slate-700">TOUCH JOYSTICK</span>
-        <div id="joystick-base" class="joystick-base">
-            <div id="joystick-stick" class="joystick-stick"></div>
-        </div>
+    <div class="setup-foot">
+      <div id="setup-status">Set a home base to deploy. Location is only used on this device (and in your private room if you join one).</div>
+      <button id="btn-start" class="btn btn-red" type="button" disabled><i class="fa-solid fa-play"></i> Initialize Run</button>
     </div>
+  </div>
+</div>
 
-    <!-- BOTTOM HUD DANGER & METRICS BAR -->
-    <div id="hud-bottom" class="absolute bottom-4 left-3 right-3 z-10 hidden pointer-events-none flex-col gap-2">
-        <!-- Threat Radar Alert -->
-        <div id="radar-alert" class="bg-red-950/90 backdrop-blur-md border border-red-600/80 rounded-xl p-2.5 text-center shadow-xl flex items-center justify-between px-4 animate-bounce">
-            <div class="flex items-center space-x-2 text-red-400 font-bold text-sm">
-                <i class="fa-solid fa-triangle-exclamation text-red-500"></i>
-                <span>ZOMBIE PROXIMITY WARNING</span>
-            </div>
-            <div id="threat-distance" class="font-mono text-xs font-extrabold text-red-300">
-                NEAREST: -- m
-            </div>
-        </div>
-
-        <!-- Telemetry HUD -->
-        <div class="bg-slate-900/90 backdrop-blur-md border border-slate-700/60 rounded-xl p-3 shadow-2xl grid grid-cols-4 gap-2 text-center pointer-events-auto">
-            <div class="flex flex-col">
-                <span class="text-[10px] text-slate-400 font-medium uppercase">Waypoints</span>
-                <span id="hud-waypoints" class="text-sm font-bold font-mono text-cyan-400">0/0</span>
-            </div>
-            <div class="flex flex-col">
-                <span class="text-[10px] text-slate-400 font-medium uppercase">Distance</span>
-                <span id="hud-distance" class="text-sm font-bold font-mono text-slate-200">0.00 km</span>
-            </div>
-            <div class="flex flex-col">
-                <span class="text-[10px] text-slate-400 font-medium uppercase">Speed</span>
-                <span id="hud-speed" class="text-sm font-bold font-mono text-emerald-400">0.0 km/h</span>
-            </div>
-            <div class="flex flex-col">
-                <span class="text-[10px] text-slate-400 font-medium uppercase">Horde Count</span>
-                <span id="hud-zombies" class="text-sm font-bold font-mono text-red-400">0</span>
-            </div>
-        </div>
+<!-- ============================ GAME OVER MODAL ============================ -->
+<div id="gameover-modal" class="modal">
+  <div class="modal-card end-card">
+    <div id="end-icon" class="end-icon"><i class="fa-solid fa-skull"></i></div>
+    <h2 id="end-title">You Were Overrun</h2>
+    <p id="end-subtitle" class="end-sub">The horde caught you in the street.</p>
+    <div id="new-best" class="new-best hidden"><i class="fa-solid fa-crown"></i> New personal best</div>
+    <div class="end-stats">
+      <div class="end-stat"><div class="k">Score</div><div id="end-score" class="v" style="color:var(--amber)">0</div></div>
+      <div class="end-stat"><div class="k">Distance</div><div id="end-distance" class="v" style="color:var(--green)">0.00 mi</div></div>
+      <div class="end-stat"><div class="k">Supplies</div><div id="end-supplies" class="v" style="color:var(--cyan)">0</div></div>
+      <div class="end-stat"><div class="k">Survived</div><div id="end-time" class="v">0:00</div></div>
+      <div class="end-stat"><div class="k">Waves</div><div id="end-wave" class="v">1</div></div>
+      <div class="end-stat"><div class="k">Personal Best</div><div id="end-best" class="v" style="color:var(--amber)">0</div></div>
     </div>
-
-    <!-- SIMULATION KEYBOARD CONTROLS HELP (Shown in manual mode) -->
-    <div id="sim-controls-hint" class="hidden absolute left-4 top-20 z-10 bg-slate-900/90 border border-slate-700 text-slate-300 p-3 rounded-xl text-xs backdrop-blur-md max-w-xs shadow-xl">
-        <div class="font-bold text-amber-400 mb-1 flex items-center space-x-1">
-            <i class="fa-solid fa-keyboard"></i>
-            <span>Manual Simulation Mode Active</span>
-        </div>
-        <p class="text-slate-400 leading-tight">Use keyboard <kbd class="px-1 py-0.5 bg-slate-800 rounded border border-slate-600">W</kbd><kbd class="px-1 py-0.5 bg-slate-800 rounded border border-slate-600">A</kbd><kbd class="px-1 py-0.5 bg-slate-800 rounded border border-slate-600">S</kbd><kbd class="px-1 py-0.5 bg-slate-800 rounded border border-slate-600">D</kbd> or <kbd class="px-1 py-0.5 bg-slate-800 rounded border border-slate-600">Arrow Keys</kbd>, or simply <b>Click on the map</b> to simulate walking.</p>
+    <div class="end-actions">
+      <button id="btn-again" class="btn btn-red" type="button"><i class="fa-solid fa-rotate-right"></i> Run Again</button>
+      <div class="row">
+        <button id="btn-share" class="btn btn-ghost" type="button"><i class="fa-solid fa-share-nodes"></i> Share</button>
+        <button id="btn-end-scores" class="btn btn-ghost" type="button"><i class="fa-solid fa-ranking-star"></i> Scores</button>
+      </div>
+      <button id="btn-change-setup" class="btn btn-ghost" type="button" style="font-size:10px">Change home base / zone</button>
     </div>
+  </div>
+</div>
 
-    <!-- SETUP / MISSION MODAL PANEL -->
-    <div id="setup-modal" class="absolute inset-0 z-30 bg-slate-950/80 backdrop-blur-lg flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl flex flex-col space-y-5">
-            <!-- Header -->
-            <div class="text-center">
-                <div class="inline-flex p-3 bg-red-950/60 rounded-2xl border border-red-800/50 mb-2">
-                    <i class="fa-solid fa-biohazard text-4xl text-red-500 animate-pulse"></i>
-                </div>
-                <h1 class="text-2xl font-black tracking-wider text-slate-100 uppercase">Z-RUN : OUTBREAK</h1>
-                <p class="text-xs text-slate-400 mt-1">Real-time GPS Street Survival & Fitness Game</p>
-            </div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/mqtt@5.10.1/dist/mqtt.min.js"></script>
+<script>
+/* ============================================================
+   Z-RUN // OUTBREAK PROTOCOL
+   Single-file GPS survival game. No build step, no backend.
+   ============================================================ */
 
-            <!-- Step 1: Base Location -->
-            <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80 space-y-3">
-                <label class="text-xs font-bold text-slate-300 uppercase tracking-wide flex items-center justify-between">
-                    <span>1. Home Base Coordinates</span>
-                    <span id="home-status" class="text-emerald-400 text-[10px] lowercase font-mono">Not set</span>
-                </label>
-                <div class="grid grid-cols-2 gap-2">
-                    <button id="btn-gps-home" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs py-2.5 px-3 rounded-lg flex items-center justify-center space-x-1.5 transition">
-                        <i class="fa-solid fa-location-crosshairs"></i>
-                        <span>Use Current GPS</span>
-                    </button>
-                    <button id="btn-map-home" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs py-2.5 px-3 rounded-lg flex items-center justify-center space-x-1.5 transition">
-                        <i class="fa-solid fa-map-pin"></i>
-                        <span>Click Map Location</span>
-                    </button>
-                </div>
-            </div>
+/* ---------------- constants & tiny utils ---------------- */
+const M_PER_MI = 1609.344;
+const M_PER_FT = 0.3048;
+const MPH_PER_MPS = 2.236936;
+const MPS_PER_MPH = 1 / MPH_PER_MPS;
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const lerp = (a, b, t) => a + (b - a) * t;
+const rand = (a, b) => a + Math.random() * (b - a);
+const uid = () => Math.random().toString(36).slice(2, 10);
 
-            <!-- Step 2: Boundary Selection -->
-            <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80 space-y-3">
-                <label class="text-xs font-bold text-slate-300 uppercase tracking-wide flex items-center justify-between">
-                    <span>2. Survival Zone Boundary</span>
-                    <span id="radius-val-display" class="text-cyan-400 font-mono text-xs">Radius: 500m</span>
-                </label>
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+function haversine(lat1, lng1, lat2, lng2) {
+  const R = 6371000, toRad = Math.PI / 180;
+  const p1 = lat1 * toRad, p2 = lat2 * toRad;
+  const dp = (lat2 - lat1) * toRad, dl = (lng2 - lng1) * toRad;
+  const a = Math.sin(dp / 2) ** 2 + Math.cos(p1) * Math.cos(p2) * Math.sin(dl / 2) ** 2;
+  return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+function bearing(lat1, lng1, lat2, lng2) {
+  const toRad = Math.PI / 180;
+  const y = Math.sin((lng2 - lng1) * toRad) * Math.cos(lat2 * toRad);
+  const x = Math.cos(lat1 * toRad) * Math.sin(lat2 * toRad) -
+            Math.sin(lat1 * toRad) * Math.cos(lat2 * toRad) * Math.cos((lng2 - lng1) * toRad);
+  return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
+}
+const COMPASS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+const compass = deg => COMPASS[Math.round(deg / 45) % 8];
+const fmtFeet = m => `${Math.round(m / M_PER_FT).toLocaleString()} ft`;
+const fmtMiles = (m, dp = 2) => `${(m / M_PER_MI).toFixed(dp)} mi`;
+const fmtMph = v => `${v.toFixed(1)} mph`;
+function fmtTime(sec) {
+  sec = Math.max(0, Math.floor(sec));
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+  return h > 0 ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}` : `${m}:${String(s).padStart(2, '0')}`;
+}
+function pointInPolygon(lat, lng, pts) {
+  let inside = false;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const xi = pts[i].lat, yi = pts[i].lng, xj = pts[j].lat, yj = pts[j].lng;
+    if (((yi > lng) !== (yj > lng)) && (lat < ((xj - xi) * (lng - yi)) / (yj - yi) + xi)) inside = !inside;
+  }
+  return inside;
+}
+function hashHue(str) {
+  let h = 0;
+  for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) % 360;
+  return h;
+}
 
-                <div class="space-y-2">
-                    <input id="radius-range" type="range" min="300" max="2000" step="100" value="500" class="w-full accent-cyan-500 bg-slate-800 h-2 rounded-lg cursor-pointer">
-                    <div class="flex justify-between text-[10px] text-slate-500 font-mono">
-                        <span>300m (Sprint)</span>
-                        <span>1km (Run)</span>
-                        <span>2km (Marathon)</span>
-                    </div>
-                </div>
+/* ---------------- state ---------------- */
+const state = {
+  home: null,
+  player: null,
+  lastPosTs: 0,
+  lastMoveAt: 0,
+  heading: 0,
+  gameActive: false,
+  simulation: false,
+  follow: true,
+  radiusMi: 0.5,
+  zone: null,
+  zombieMph: 5.5,
+  zombieMps: 5.5 * MPS_PER_MPH,
+  hp: 100,
+  score: 0,
+  supplies: 0,
+  totalSupplies: 0,
+  distanceM: 0,
+  distanceScorePool: 0,
+  speedMph: 0,
+  wave: 1,
+  elapsed: 0,
+  startedAt: 0,
+  lastTick: 0,
+  name: '',
+  room: '',
+  nearestZombie: Infinity,
+  nearestZombieDir: 0,
+  playerMarker: null,
+  accuracyCircle: null,
+  homeMarker: null,
+  zoneLayer: null,
+  gpsWatch: null,
+  gpsFails: 0,
+  muted: false,
+  squadLinked: false,
+  lastDamageToast: 0,
+  activeTab: 'room',
+};
+const zombies = [];
+let waypoints = [];
+const keys = new Set();
+const joy = { x: 0, y: 0 };
+const draw = { active: false, pts: [], line: null, dots: [], prevZone: null };
+const pick = { active: false };
 
-                <div class="pt-1 flex items-center justify-between border-t border-slate-800/60">
-                    <span class="text-xs text-slate-400">Or draw custom polygon:</span>
-                    <button id="btn-draw-poly" class="bg-slate-800 hover:bg-slate-700 text-cyan-400 text-xs px-3 py-1.5 rounded-lg border border-slate-700 transition">
-                        <i class="fa-solid fa-draw-polygon mr-1"></i> Draw Boundary
-                    </button>
-                </div>
-            </div>
+/* ---------------- dom refs ---------------- */
+const setupModal = $('#setup-modal');
+const gameOverModal = $('#gameover-modal');
+const hudBottom = $('#hud-bottom');
+const hpBar = $('#hp-bar');
+const hpText = $('#hp-text');
+const hudScore = $('#hud-score');
+const hudDistance = $('#hud-distance');
+const hudSupplies = $('#hud-supplies');
+const hudZombies = $('#hud-zombies');
+const hudWave = $('#hud-wave');
+const hudTime = $('#hud-time');
+const hudSpeed = $('#hud-speed');
+const speedFill = $('#speed-fill');
+const objSupplies = $('#obj-supplies');
+const objHorde = $('#obj-horde');
+const objDistance = $('#obj-distance');
+const objProgress = $('#obj-progress');
+const missionWave = $('#mission-wave');
+const radarDist = $('#radar-dist');
+const radarSub = $('#radar-sub');
+const threatBanner = $('#threat-banner');
+const threatText = $('#threat-text');
+const roomChip = $('#room-chip');
+const roomChipLabel = $('#room-chip-label');
+const roomStatusEl = $('#room-status');
+const roomStatusText = $('#room-status-text');
+const scoreList = $('#score-list');
+const squadChip = $('#squad-chip');
+const audioIcon = $('#audio-icon');
+const gpsChip = $('#gps-chip');
+const setupStatus = $('#setup-status');
+const homeStatus = $('#home-status');
+const radiusRange = $('#radius-range');
+const radiusValue = $('#radius-value');
+const nameInput = $('#name-input');
+const roomInput = $('#room-input');
+const roomInputPanel = $('#room-input-panel');
+const btnStart = $('#btn-start');
+const toastsEl = $('#toasts');
+const damageFlash = $('#damage-flash');
 
-            <!-- Step 3: Difficulty & Zombie Speed -->
-            <div class="bg-slate-950/60 p-4 rounded-xl border border-slate-800/80 space-y-2">
-                <label class="text-xs font-bold text-slate-300 uppercase tracking-wide">3. Zombie Pace (Difficulty)</label>
-                <div class="grid grid-cols-3 gap-2">
-                    <button data-speed="6" class="speed-select-btn bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs py-2 rounded-lg text-center font-bold">
-                        Walker<br><span class="text-[10px] font-normal text-slate-400">6 km/h</span>
-                    </button>
-                    <button data-speed="9" class="speed-select-btn bg-red-950/50 border-red-600 text-red-400 text-xs py-2 rounded-lg text-center font-bold ring-2 ring-red-500">
-                        Jogger<br><span class="text-[10px] font-normal text-slate-400">9 km/h</span>
-                    </button>
-                    <button data-speed="12" class="speed-select-btn bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-xs py-2 rounded-lg text-center font-bold">
-                        Runner<br><span class="text-[10px] font-normal text-slate-400">12 km/h</span>
-                    </button>
-                </div>
-            </div>
+/* ---------------- audio ---------------- */
+class SoundEngine {
+  constructor() { this.ctx = null; this.master = null; this.siren = null; this.sirenGain = null; this.muted = false; }
+  init() {
+    try {
+      if (!this.ctx) {
+        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        this.master = this.ctx.createGain();
+        this.master.gain.value = 0.55;
+        this.master.connect(this.ctx.destination);
+      }
+      if (this.ctx.state === 'suspended') this.ctx.resume();
+    } catch (e) { /* audio unsupported */ }
+  }
+  tone(freq, freq2, dur, type = 'sine', vol = 0.2, delay = 0) {
+    if (!this.ctx || this.muted) return;
+    const t0 = this.ctx.currentTime + delay;
+    const osc = this.ctx.createOscillator(), g = this.ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, t0);
+    if (freq2) osc.frequency.exponentialRampToValueAtTime(Math.max(20, freq2), t0 + dur);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(vol, t0 + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(g); g.connect(this.master);
+    osc.start(t0); osc.stop(t0 + dur + 0.02);
+  }
+  collect() { this.tone(660, 990, 0.14, 'sine', 0.18); this.tone(990, 1320, 0.18, 'sine', 0.13, 0.08); }
+  damage() { this.tone(150, 45, 0.28, 'sawtooth', 0.26); }
+  wave() { [523, 659, 784, 1046].forEach((f, i) => this.tone(f, null, 0.2, 'triangle', 0.16, i * 0.09)); }
+  over() { [330, 262, 208, 155].forEach((f, i) => this.tone(f, null, 0.35, 'sawtooth', 0.14, i * 0.16)); }
+  startSiren() {
+    if (!this.ctx || this.muted || this.siren) return;
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator(), lfo = this.ctx.createOscillator();
+    const lfoGain = this.ctx.createGain(), g = this.ctx.createGain();
+    osc.type = 'triangle'; osc.frequency.value = 520;
+    lfo.type = 'sine'; lfo.frequency.value = 0.9;
+    lfoGain.gain.value = 150;
+    lfo.connect(lfoGain); lfoGain.connect(osc.frequency);
+    g.gain.value = 0.0001;
+    g.gain.exponentialRampToValueAtTime(0.035, t + 0.4);
+    osc.connect(g); g.connect(this.master);
+    osc.start(t); lfo.start(t);
+    this.siren = { osc, lfo }; this.sirenGain = g;
+  }
+  stopSiren() {
+    if (!this.siren) return;
+    try {
+      const t = this.ctx.currentTime;
+      this.sirenGain.gain.cancelScheduledValues(t);
+      this.sirenGain.gain.setTargetAtTime(0.0001, t, 0.08);
+      this.siren.osc.stop(t + 0.4); this.siren.lfo.stop(t + 0.4);
+    } catch (e) {}
+    this.siren = null; this.sirenGain = null;
+  }
+  setMuted(m) { this.muted = m; if (m) this.stopSiren(); }
+}
+const audio = new SoundEngine();
 
-            <!-- Start Game Trigger -->
-            <button id="btn-start-game" disabled class="w-full bg-gradient-to-r from-red-700 to-red-600 disabled:opacity-50 disabled:cursor-not-allowed hover:from-red-600 hover:to-red-500 text-white font-black text-base py-3.5 rounded-xl shadow-lg shadow-red-900/40 uppercase tracking-widest transition">
-                Initialize Survival Run
-            </button>
+/* ---------------- map ---------------- */
+let map = null;
+
+function initMap() {
+  map = L.map('map', {
+    zoomControl: false,
+    attributionControl: true,
+    preferCanvas: true,
+    worldCopyJump: true,
+  }).setView([39.8283, -98.5795], 4);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
+  }).addTo(map);
+
+  L.control.zoom({ position: 'topright' }).addTo(map);
+  L.control.scale({ position: 'bottomleft', imperial: true, metric: false, maxWidth: 120 }).addTo(map);
+
+  map.on('click', onMapClick);
+  map.on('dragstart', () => { state.follow = false; });
+  map.on('dblclick', () => { if (draw.active) finishDraw(); });
+}
+
+function onMapClick(e) {
+  if (draw.active) { addDrawPoint(e.latlng); return; }
+  if (pick.active) { setHome(e.latlng.lat, e.latlng.lng, 'map pin'); endPick(); return; }
+  if (state.gameActive && state.simulation) {
+    setPlayerPosition(e.latlng.lat, e.latlng.lng, { teleport: true, ts: Date.now() });
+  }
+}
+
+function recenterMap(zoom) {
+  if (!state.player) return;
+  state.follow = true;
+  map.setView([state.player.lat, state.player.lng], zoom || Math.max(map.getZoom(), 16), { animate: true });
+}
+
+/* ---------------- toasts ---------------- */
+function toast(msg, type = 'info', ms = 2400) {
+  if (!toastsEl) return;
+  while (toastsEl.children.length >= 4) toastsEl.firstElementChild.remove();
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  const icon = type === 'good' ? 'fa-circle-check' : type === 'bad' ? 'fa-triangle-exclamation' : type === 'warn' ? 'fa-triangle-exclamation' : 'fa-circle-info';
+  el.innerHTML = `<i class="fa-solid ${icon}"></i><span>${escapeHtml(msg)}</span>`;
+  toastsEl.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 300); }, ms);
+}
+
+/* ---------------- preferences ---------------- */
+function defaultName() {
+  return 'Runner-' + String(Math.floor(rand(100, 999)));
+}
+function loadPrefs() {
+  let prefs = {};
+  try { prefs = JSON.parse(localStorage.getItem('zrun.prefs.v2') || '{}'); } catch (e) {}
+  state.name = prefs.name || defaultName();
+  state.room = prefs.room || '';
+  state.radiusMi = clamp(parseFloat(prefs.radiusMi) || 0.5, 0.15, 1.5);
+  state.zombieMph = [3.5, 5.5, 7.5].includes(parseFloat(prefs.zombieMph)) ? parseFloat(prefs.zombieMph) : 5.5;
+  state.muted = !!prefs.muted;
+  nameInput.value = state.name;
+  roomInput.value = state.room;
+  roomInputPanel.value = state.room;
+  radiusRange.value = state.radiusMi;
+  syncRadiusUI();
+  syncPaceUI();
+  audio.setMuted(state.muted);
+  audioIcon.className = state.muted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
+  $('#btn-audio').classList.toggle('on', !state.muted);
+
+  const params = new URLSearchParams(location.search);
+  if (params.get('room')) {
+    const r = sanitizeRoom(params.get('room'));
+    state.room = r; roomInput.value = r; roomInputPanel.value = r;
+  }
+  if (params.get('name')) {
+    const n = sanitizeName(params.get('name'));
+    if (n) { state.name = n; nameInput.value = n; }
+  }
+}
+function savePrefs() {
+  try {
+    localStorage.setItem('zrun.prefs.v2', JSON.stringify({
+      name: state.name, room: state.room, radiusMi: state.radiusMi,
+      zombieMph: state.zombieMph, muted: state.muted,
+    }));
+  } catch (e) {}
+}
+const sanitizeRoom = s => String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10);
+const sanitizeName = s => String(s || '').replace(/[^\w \-]/g, '').replace(/\s+/g, ' ').trim().slice(0, 16);
+
+/* ---------------- setup UI ---------------- */
+function syncRadiusUI() {
+  radiusValue.textContent = `${state.radiusMi.toFixed(2)} mi`;
+  const across = $('#zone-across');
+  if (across) across.textContent = `≈ ${Math.round(state.radiusMi * 2 * 5280).toLocaleString()} ft across`;
+  $$('.preset').forEach(b => b.classList.toggle('active', Math.abs(parseFloat(b.dataset.radius) - state.radiusMi) < 0.001));
+}
+function syncPaceUI() {
+  $$('.pace').forEach(b => b.classList.toggle('active', Math.abs(parseFloat(b.dataset.mph) - state.zombieMph) < 0.01));
+  const p = $$('.pace').find(b => Math.abs(parseFloat(b.dataset.mph) - state.zombieMph) < 0.01);
+  $('#pace-status').textContent = p ? p.querySelector('.nm').textContent.toLowerCase() : 'custom';
+}
+function updateStartState() {
+  btnStart.disabled = !state.home;
+  if (state.home) {
+    setupStatus.textContent = 'Home base locked. Ready to deploy — the horde is already moving.';
+    setupStatus.className = 'ok';
+    homeStatus.textContent = 'locked';
+    homeStatus.className = 'step-status ok';
+  } else {
+    setupStatus.textContent = 'Set a home base to deploy. Location is only used on this device (and in your private room if you join one).';
+    setupStatus.className = '';
+    homeStatus.textContent = 'not set';
+    homeStatus.className = 'step-status';
+  }
+}
+function setGpsChip(text, cls) {
+  if (!gpsChip) return;
+  gpsChip.className = 'mini-chip ' + (cls || '');
+  gpsChip.innerHTML = `<i class="fa-solid fa-location-dot"></i> ${escapeHtml(text)}`;
+}
+
+function setHome(lat, lng, source) {
+  state.home = { lat, lng };
+  if (!state.gameActive) {
+    state.player = { lat, lng };
+    state.lastPosTs = Date.now();
+    state.lastMoveAt = Date.now();
+  } else if (!state.player) {
+    state.player = { lat, lng };
+    state.lastPosTs = Date.now();
+  }
+  if (!state.zone || state.zone.type === 'circle') {
+    setZoneCircle(state.home, state.radiusMi * M_PER_MI);
+  }
+  if (state.homeMarker) map.removeLayer(state.homeMarker);
+  state.homeMarker = L.marker([lat, lng], {
+    icon: L.divIcon({ className: '', html: '<div class="home-marker"><i class="fa-solid fa-house"></i></div>', iconSize: [26, 26], iconAnchor: [13, 13] }),
+    zIndexOffset: 500,
+  }).addTo(map);
+  map.setView([lat, lng], 16);
+  updateStartState();
+  if (source) toast('Home base set', 'good', 1600);
+  if (state.gameActive) {
+    if (state.playerMarker) state.playerMarker.setLatLng([state.player.lat, state.player.lng]);
+    if (state.accuracyCircle) state.accuracyCircle.setLatLng([state.player.lat, state.player.lng]);
+  }
+}
+
+function setZoneCircle(center, radiusM) {
+  state.zone = { type: 'circle', center: { ...center }, radiusM };
+  renderZone();
+}
+function renderZone() {
+  if (state.zoneLayer) { map.removeLayer(state.zoneLayer); state.zoneLayer = null; }
+  if (!state.zone) return;
+  if (state.zone.type === 'circle') {
+    state.zoneLayer = L.circle([state.zone.center.lat, state.zone.center.lng], {
+      radius: state.zone.radiusM, color: '#4fe3ff', weight: 1.5, opacity: 0.9,
+      fillColor: '#4fe3ff', fillOpacity: 0.045, dashArray: '10 10', interactive: false,
+    }).addTo(map);
+  } else {
+    state.zoneLayer = L.polygon(state.zone.latlngs, {
+      color: '#4fe3ff', weight: 1.5, opacity: 0.9,
+      fillColor: '#4fe3ff', fillOpacity: 0.045, dashArray: '10 10', interactive: false,
+    }).addTo(map);
+  }
+}
+function isInZone(lat, lng) {
+  if (!state.zone) return true;
+  if (state.zone.type === 'circle') {
+    return haversine(lat, lng, state.zone.center.lat, state.zone.center.lng) <= state.zone.radiusM;
+  }
+  return pointInPolygon(lat, lng, state.zone.latlngs);
+}
+function zoneBounds() {
+  if (!state.zone) {
+    const c = state.home || { lat: 0, lng: 0 };
+    return L.latLng(c.lat, c.lng).toBounds(1609);
+  }
+  if (state.zone.type === 'circle') {
+    return L.latLng(state.zone.center.lat, state.zone.center.lng).toBounds(state.zone.radiusM * 2);
+  }
+  return L.latLngBounds(state.zone.latlngs.map(p => [p.lat, p.lng]));
+}
+
+/* ---------------- pick home ---------------- */
+function beginPick() {
+  pick.active = true;
+  setupModal.classList.remove('open');
+  $('#pick-banner').classList.remove('hidden');
+}
+function endPick() {
+  pick.active = false;
+  $('#pick-banner').classList.add('hidden');
+  setupModal.classList.add('open');
+}
+
+/* ---------------- custom zone drawing ---------------- */
+function beginDraw() {
+  draw.active = true;
+  draw.prevZone = state.zone ? JSON.parse(JSON.stringify(state.zone)) : null;
+  clearDraw();
+  setupModal.classList.remove('open');
+  $('#draw-toolbar').classList.remove('hidden');
+  map.doubleClickZoom.disable();
+  toast('Tap the map to place zone corners', 'info', 2600);
+}
+function clearDraw() {
+  if (draw.line) { map.removeLayer(draw.line); draw.line = null; }
+  draw.dots.forEach(d => map.removeLayer(d));
+  draw.dots = [];
+  draw.pts = [];
+  updateDrawCount();
+}
+function updateDrawCount() {
+  const el = $('#draw-count');
+  if (el) el.textContent = String(draw.pts.length);
+  const fin = $('#btn-draw-finish');
+  if (fin) fin.disabled = draw.pts.length < 3;
+}
+function addDrawPoint(latlng) {
+  draw.pts.push({ lat: latlng.lat, lng: latlng.lng });
+  const dot = L.marker(latlng, {
+    icon: L.divIcon({ className: '', html: '<div class="vertex-dot"></div>', iconSize: [12, 12], iconAnchor: [6, 6] }),
+    interactive: false,
+  }).addTo(map);
+  draw.dots.push(dot);
+  if (draw.line) map.removeLayer(draw.line);
+  if (draw.pts.length > 1) {
+    draw.line = L.polyline(draw.pts.map(p => [p.lat, p.lng]), { color: '#4fe3ff', weight: 2, dashArray: '6 6', interactive: false }).addTo(map);
+  }
+  updateDrawCount();
+}
+function undoDrawPoint() {
+  if (!draw.pts.length) return;
+  draw.pts.pop();
+  const dot = draw.dots.pop();
+  if (dot) map.removeLayer(dot);
+  if (draw.line) map.removeLayer(draw.line);
+  if (draw.pts.length > 1) {
+    draw.line = L.polyline(draw.pts.map(p => [p.lat, p.lng]), { color: '#4fe3ff', weight: 2, dashArray: '6 6', interactive: false }).addTo(map);
+  }
+  updateDrawCount();
+}
+function finishDraw() {
+  if (draw.pts.length < 3) { toast('Place at least 3 corners', 'warn'); return; }
+  draw.prevZone = null;
+  state.zone = { type: 'polygon', latlngs: draw.pts.map(p => ({ ...p })) };
+  renderZone();
+  if (!state.home) {
+    const b = L.latLngBounds(state.zone.latlngs.map(p => [p.lat, p.lng]));
+    const c = b.getCenter();
+    setHome(c.lat, c.lng, null);
+  }
+  endDraw();
+  radiusValue.textContent = 'custom';
+  $$('.preset').forEach(b => b.classList.remove('active'));
+  setupStatus.textContent = 'Custom survival zone locked.';
+  setupStatus.className = 'ok';
+  toast('Custom zone set', 'good');
+}
+function endDraw() {
+  draw.active = false;
+  clearDraw();
+  $('#draw-toolbar').classList.add('hidden');
+  map.doubleClickZoom.enable();
+  setupModal.classList.add('open');
+}
+function cancelDraw() {
+  const prev = draw.prevZone;
+  endDraw();
+  draw.prevZone = null;
+  state.zone = prev;
+  renderZone();
+  if (prev && prev.type === 'polygon') {
+    radiusValue.textContent = 'custom';
+    $$('.preset').forEach(b => b.classList.remove('active'));
+  } else {
+    syncRadiusUI();
+  }
+}
+
+/* ---------------- simulation mode ---------------- */
+function setSimulation(on, announce = true) {
+  state.simulation = on;
+  $('#btn-sim').classList.toggle('on', on);
+  if (on) {
+    stopGps();
+    if (state.gameActive) {
+      $('#joystick').classList.remove('hidden');
+      $('#sim-hint').classList.remove('hidden');
+    }
+    if (announce) toast('Simulation mode — joystick / WASD / tap map', 'warn', 2800);
+  } else {
+    $('#joystick').classList.add('hidden');
+    $('#sim-hint').classList.add('hidden');
+    if (state.gameActive) startGps();
+    if (announce) toast('GPS mode', 'info', 1800);
+  }
+}
+
+/* ---------------- screen wake lock ---------------- */
+let wakeLock = null;
+async function requestWakeLock() {
+  try {
+    if (!('wakeLock' in navigator) || wakeLock) return;
+    wakeLock = await navigator.wakeLock.request('screen');
+    wakeLock.addEventListener('release', () => { wakeLock = null; });
+  } catch (e) { wakeLock = null; }
+}
+function releaseWakeLock() {
+  try { if (wakeLock) wakeLock.release().catch(() => {}); } catch (e) {}
+  wakeLock = null;
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && state.gameActive) requestWakeLock();
+});
+
+/* ---------------- GPS ---------------- */
+function startGps() {
+  if (!navigator.geolocation) {
+    setGpsChip('GPS unsupported', 'warn');
+    setSimulation(true, false);
+    toast('Geolocation is not supported here — simulation mode enabled', 'warn', 4000);
+    return;
+  }
+  stopGps();
+  setGpsChip('Locating…', 'warn');
+  state.gpsWatch = navigator.geolocation.watchPosition(onGpsFix, onGpsError, {
+    enableHighAccuracy: true, maximumAge: 1500, timeout: 15000,
+  });
+}
+function stopGps() {
+  if (state.gpsWatch != null) {
+    navigator.geolocation.clearWatch(state.gpsWatch);
+    state.gpsWatch = null;
+  }
+}
+function onGpsFix(pos) {
+  state.gpsFails = 0;
+  const c = pos.coords;
+  setGpsChip(`GPS ±${Math.round(c.accuracy || 0)} m`, 'ok');
+  if (!state.home) {
+    setHome(c.latitude, c.longitude, null);
+  }
+  if (!state.gameActive) {
+    if (!state.player) state.player = { lat: c.latitude, lng: c.longitude };
+    return;
+  }
+  setPlayerPosition(c.latitude, c.longitude, {
+    accuracy: c.accuracy || 0,
+    speedMps: (c.speed != null && isFinite(c.speed) && c.speed >= 0) ? c.speed : null,
+    ts: pos.timestamp || Date.now(),
+  });
+  if (state.accuracyCircle) {
+    state.accuracyCircle.setLatLng([c.latitude, c.longitude]);
+    state.accuracyCircle.setRadius(Math.max(0, c.accuracy || 0));
+  }
+}
+function onGpsError(err) {
+  state.gpsFails++;
+  let msg = 'GPS signal lost.';
+  if (err.code === 1) msg = 'Location permission denied.';
+  else if (err.code === 2) msg = 'GPS position unavailable.';
+  else if (err.code === 3) msg = 'GPS timed out.';
+  setGpsChip('GPS error', 'warn');
+  if (err.code === 1 || state.gpsFails >= 2) {
+    setSimulation(true, false);
+    toast(`${msg} Simulation mode enabled.`, 'warn', 4200);
+  } else {
+    toast(`${msg} Retrying…`, 'warn', 2600);
+  }
+}
+
+/* ---------------- player position & markers ---------------- */
+function createPlayerMarker(lat, lng) {
+  if (state.playerMarker) map.removeLayer(state.playerMarker);
+  const icon = L.divIcon({
+    className: 'player-marker',
+    html: '<div class="player-pulse"></div><div class="player-core"><i class="fa-solid fa-person-running"></i></div>',
+    iconSize: [34, 34], iconAnchor: [17, 17],
+  });
+  state.playerMarker = L.marker([lat, lng], { icon, zIndexOffset: 1000, interactive: false }).addTo(map);
+  if (state.accuracyCircle) map.removeLayer(state.accuracyCircle);
+  state.accuracyCircle = L.circle([lat, lng], {
+    radius: 0, color: '#6dffa8', weight: 1, opacity: 0.45,
+    fillColor: '#6dffa8', fillOpacity: 0.06, interactive: false,
+  }).addTo(map);
+}
+
+function setPlayerPosition(lat, lng, opts = {}) {
+  if (!state.player) {
+    state.player = { lat, lng };
+    state.lastPosTs = opts.ts || Date.now();
+    state.lastMoveAt = Date.now();
+    return;
+  }
+  const now = opts.ts || Date.now();
+  const prev = state.player;
+  const d = haversine(prev.lat, prev.lng, lat, lng);
+  const dt = Math.max(0.2, (now - state.lastPosTs) / 1000);
+  const accuracy = opts.accuracy || 0;
+  const minMove = opts.force ? 0.01 : Math.max(1.2, accuracy * 0.3);
+  const teleport = opts.teleport === true;
+
+  if (!teleport && d >= minMove && d < 400 && dt < 45) {
+    state.distanceM += d;
+    state.distanceScorePool += d;
+    while (state.distanceScorePool >= 10) { state.score += 1; state.distanceScorePool -= 10; }
+    let instMph;
+    if (opts.speedMps != null && isFinite(opts.speedMps) && opts.speedMps >= 0) {
+      instMph = clamp(opts.speedMps * MPH_PER_MPS, 0, 30);
+    } else {
+      instMph = clamp((d / dt) * MPH_PER_MPS, 0, 30);
+    }
+    state.speedMph = lerp(state.speedMph, instMph, 0.4);
+    state.heading = bearing(prev.lat, prev.lng, lat, lng);
+    state.lastMoveAt = now;
+  } else if (!teleport && d < 400 && dt < 45 && opts.speedMps != null && opts.speedMps >= 0.6) {
+    // Slow fixes can fall under the GPS noise threshold; use reported speed so
+    // real movement still counts toward distance and score.
+    const gain = Math.min(opts.speedMps * dt, 60);
+    state.distanceM += gain;
+    state.distanceScorePool += gain;
+    while (state.distanceScorePool >= 10) { state.score += 1; state.distanceScorePool -= 10; }
+    state.speedMph = lerp(state.speedMph, clamp(opts.speedMps * MPH_PER_MPS, 0, 30), 0.4);
+    state.lastMoveAt = now;
+  } else if (!teleport && Date.now() - state.lastMoveAt > 1400) {
+    state.speedMph *= 0.82;
+    if (state.speedMph < 0.25) state.speedMph = 0;
+  }
+
+  state.player = { lat, lng };
+  state.lastPosTs = now;
+
+  if (state.playerMarker) state.playerMarker.setLatLng([lat, lng]);
+  if (state.accuracyCircle && !teleport) {
+    state.accuracyCircle.setLatLng([lat, lng]);
+    if (opts.accuracy) state.accuracyCircle.setRadius(opts.accuracy);
+  }
+
+  if (state.follow) {
+    const c = map.getCenter();
+    if (haversine(c.lat, c.lng, lat, lng) > 45) {
+      map.panTo([lat, lng], { animate: true, duration: 0.35, easeLinearity: 0.4 });
+    }
+  }
+
+  checkWaypointCollisions();
+  updateHUD();
+}
+
+/* ---------------- supplies ---------------- */
+const SUPPLY_TYPES = [
+  { id: 'medkit', name: 'Medkit', icon: 'fa-kit-medical', color: '#ff6b8a', points: 150, heal: 28 },
+  { id: 'rations', name: 'Rations', icon: 'fa-bowl-food', color: '#ffb648', points: 100, heal: 12 },
+  { id: 'ammo', name: 'Ammo cache', icon: 'fa-shield-halved', color: '#4fe3ff', points: 200, heal: 0 },
+  { id: 'battery', name: 'Radio battery', icon: 'fa-bolt', color: '#6dffa8', points: 120, heal: 6 },
+];
+
+function waveSupplyCount() { return Math.min(16, 6 + state.wave * 2); }
+
+function spawnSupplies(count) {
+  waypoints.forEach(w => { if (w.marker) map.removeLayer(w.marker); });
+  waypoints = [];
+  if (!nav.ready || !nav.nodes.length) { state.totalSupplies = 0; updateHUD(); return; }
+  const candidates = nav.nodes.filter(n => isInZone(n.lat, n.lng));
+  const pool = candidates.length ? candidates : nav.nodes;
+  const chosen = [];
+  let guard = 0;
+  while (chosen.length < count && guard < count * 120) {
+    guard++;
+    const n = pool[Math.floor(Math.random() * pool.length)];
+    if (!n) break;
+    if (state.player && haversine(n.lat, n.lng, state.player.lat, state.player.lng) < 70) continue;
+    if (chosen.some(c => haversine(c.lat, c.lng, n.lat, n.lng) < 90)) continue;
+    chosen.push(n);
+  }
+  chosen.forEach(n => createSupplyWaypoint(n.lat, n.lng));
+  state.totalSupplies = waypoints.length;
+  state.supplies = 0;
+  updateHUD();
+  if (waypoints.length) toast(`Wave ${state.wave}: ${waypoints.length} caches dropped`, 'info', 2600);
+}
+
+function createSupplyWaypoint(lat, lng) {
+  const type = SUPPLY_TYPES[Math.floor(Math.random() * SUPPLY_TYPES.length)];
+  const icon = L.divIcon({
+    className: 'supply-marker',
+    html: `<div class="supply-core" style="--c:${type.color}"><i class="fa-solid ${type.icon}"></i></div>`,
+    iconSize: [30, 30], iconAnchor: [15, 15],
+  });
+  const marker = L.marker([lat, lng], { icon, zIndexOffset: 300, interactive: false }).addTo(map);
+  waypoints.push({ marker, lat, lng, type, collected: false });
+}
+
+function checkWaypointCollisions() {
+  if (!state.player || !state.gameActive) return;
+  for (const wp of waypoints) {
+    if (wp.collected) continue;
+    if (haversine(state.player.lat, state.player.lng, wp.lat, wp.lng) <= 18) {
+      wp.collected = true;
+      if (wp.marker) map.removeLayer(wp.marker);
+      state.score += wp.type.points;
+      state.supplies++;
+      state.hp = clamp(state.hp + wp.type.heal, 0, 100);
+      audio.collect();
+      toast(`+${wp.type.points} · ${wp.type.name}${wp.type.heal ? ` (+${wp.type.heal} HP)` : ''}`, 'good', 2100);
+      publishState();
+      if (waypoints.length && waypoints.every(w => w.collected)) completeWave();
+    }
+  }
+}
+
+function completeWave() {
+  const bonus = 300 * state.wave;
+  state.score += bonus;
+  audio.wave();
+  toast(`Wave ${state.wave} cleared · +${bonus} bonus`, 'good', 3200);
+  state.wave++;
+  state.zombieMps = state.zombieMph * MPS_PER_MPH * Math.min(1.35, 1 + (state.wave - 1) * 0.05);
+  setTimeout(() => {
+    if (!state.gameActive) return;
+    spawnSupplies(waveSupplyCount());
+    for (let i = 0; i < 2; i++) spawnZombie();
+    publishState();
+  }, 1800);
+}
+
+/* ============================================================
+   NAVIGATION GRAPH — roads, footpaths, parks, grass, fields
+   ============================================================ */
+const nav = {
+  nodes: [], byId: new Map(), grid: new Map(), polygons: [],
+  ready: false, loading: false, source: '', token: 0, key: '',
+};
+const CELL = 0.0025;
+const EXCLUDED_ACCESS = new Set(['private', 'no']);
+const EXCLUDED_SERVICE = /driveway|parking_aisle|private/i;
+
+function cellKey(lat, lng) {
+  return `${Math.floor(lat / CELL)},${Math.floor(lng / CELL)}`;
+}
+function rebuildSpatialIndex() {
+  nav.grid.clear();
+  for (const n of nav.nodes) {
+    const k = cellKey(n.lat, n.lng);
+    let arr = nav.grid.get(k);
+    if (!arr) { arr = []; nav.grid.set(k, arr); }
+    arr.push(n);
+  }
+}
+function nearestNode(lat, lng) {
+  if (!nav.nodes.length) return null;
+  const ci = Math.floor(lat / CELL), cj = Math.floor(lng / CELL);
+  let best = null, bd = Infinity;
+  for (let r = 0; r <= 4; r++) {
+    for (let i = ci - r; i <= ci + r; i++) {
+      for (let j = cj - r; j <= cj + r; j++) {
+        if (Math.max(Math.abs(i - ci), Math.abs(j - cj)) !== r) continue;
+        const arr = nav.grid.get(`${i},${j}`);
+        if (!arr) continue;
+        for (const n of arr) {
+          const d = haversine(lat, lng, n.lat, n.lng);
+          if (d < bd) { bd = d; best = n; }
+        }
+      }
+    }
+    if (best && r > 0 && bd < r * CELL * 111000 * 0.9) break;
+  }
+  return best;
+}
+function nearestNodeDistance(lat, lng) {
+  const n = nearestNode(lat, lng);
+  return n ? haversine(lat, lng, n.lat, n.lng) : Infinity;
+}
+function nearbyNodes(lat, lng, radiusM, limit = 12) {
+  if (!nav.nodes.length) return [];
+  const ci = Math.floor(lat / CELL), cj = Math.floor(lng / CELL);
+  const out = [];
+  const ring = Math.max(1, Math.ceil(radiusM / (CELL * 111000)) + 1);
+  for (let i = ci - ring; i <= ci + ring; i++) {
+    for (let j = cj - ring; j <= cj + ring; j++) {
+      const arr = nav.grid.get(`${i},${j}`);
+      if (!arr) continue;
+      for (const n of arr) {
+        const d = haversine(lat, lng, n.lat, n.lng);
+        if (d <= radiusM) out.push({ n, d });
+      }
+    }
+  }
+  out.sort((a, b) => a.d - b.d);
+  return out.slice(0, limit).map(o => o.n);
+}
+function greenPoly(lat, lng) {
+  for (const poly of nav.polygons) {
+    if (lat < poly.minLat || lat > poly.maxLat || lng < poly.minLng || lng > poly.maxLng) continue;
+    if (pointInPolygon(lat, lng, poly.pts)) return poly;
+  }
+  return null;
+}
+function isInGreen(lat, lng) { return !!greenPoly(lat, lng); }
+
+function buildNav(elements) {
+  const byId = new Map();
+  const polys = [];
+  const nodes = [];
+
+  for (const el of elements) {
+    if (el.type !== 'node') continue;
+    let n = byId.get(el.id);
+    if (!n) { n = { id: el.id, lat: el.lat, lng: el.lon, adj: [], green: false, _adj: new Set() }; byId.set(el.id, n); }
+    else { n.lat = el.lat; n.lng = el.lon; }
+  }
+
+  const addEdge = (a, b) => {
+    if (!a || !b || a === b) return;
+    const w = haversine(a.lat, a.lng, b.lat, b.lng);
+    if (!(w > 0.5 && w < 3000)) return;
+    if (!a._adj.has(b.id)) { a._adj.add(b.id); a.adj.push({ to: b.id, w }); }
+    if (!b._adj.has(a.id)) { b._adj.add(a.id); b.adj.push({ to: a.id, w }); }
+  };
+
+  for (const el of elements) {
+    if (el.type !== 'way' || !el.nodes || el.nodes.length < 2) continue;
+    const tags = el.tags || {};
+    const green = !!(tags.leisure || tags.landuse || tags.natural);
+    const highway = tags.highway;
+    if (!highway && !green) continue;
+    if (highway) {
+      if (tags.access && EXCLUDED_ACCESS.has(tags.access)) continue;
+      if (highway === 'service' && EXCLUDED_SERVICE.test(tags.service || '')) continue;
+    }
+    const pts = [];
+    for (const id of el.nodes) {
+      const n = byId.get(id);
+      if (n && Number.isFinite(n.lat) && Number.isFinite(n.lng)) pts.push(n);
+    }
+    for (let i = 0; i < pts.length - 1; i++) addEdge(pts[i], pts[i + 1]);
+    if (green && pts.length >= 3) {
+      const shape = pts.map(p => ({ lat: p.lat, lng: p.lng }));
+      let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
+      for (const p of shape) {
+        if (p.lat < minLat) minLat = p.lat;
+        if (p.lat > maxLat) maxLat = p.lat;
+        if (p.lng < minLng) minLng = p.lng;
+        if (p.lng > maxLng) maxLng = p.lng;
+      }
+      polys.push({ pts: shape, minLat, maxLat, minLng, maxLng });
+    }
+    if (green) pts.forEach(p => { p.green = true; });
+  }
+
+  for (const n of byId.values()) if (n.adj.length) nodes.push(n);
+
+  nav.byId = byId;
+  nav.nodes = nodes;
+  nav.polygons = polys;
+  rebuildSpatialIndex();
+
+  // Connect green-space nodes that touch a street but share no node with it.
+  for (const n of nodes) {
+    if (!n.green) continue;
+    const touchesStreet = n.adj.some(e => { const m = byId.get(e.to); return m && !m.green; });
+    if (touchesStreet) continue;
+    const near = nearbyNodes(n.lat, n.lng, 55, 10);
+    const street = near.find(m => !m.green && m.adj.length);
+    if (street) {
+      const w = haversine(n.lat, n.lng, street.lat, street.lng);
+      if (!n._adj.has(street.id)) { n._adj.add(street.id); n.adj.push({ to: street.id, w }); }
+      if (!street._adj.has(n.id)) { street._adj.add(n.id); street.adj.push({ to: n.id, w }); }
+    }
+  }
+
+  for (const n of byId.values()) delete n._adj;
+
+  nav.ready = nodes.length >= 8;
+  nav.source = nav.ready ? 'osm' : '';
+  if (!nav.ready) nav.nodes = [];
+}
+
+function buildFallbackNav() {
+  const c = state.home || { lat: 0, lng: 0 };
+  const step = 0.0011;
+  const n = 8;
+  const nodes = [];
+  const idx = (i, j) => (i + n) * (2 * n + 1) + (j + n);
+  const lngScale = 1 / Math.max(0.25, Math.cos(c.lat * Math.PI / 180));
+  for (let i = -n; i <= n; i++) {
+    for (let j = -n; j <= n; j++) {
+      nodes.push({
+        id: `f${i}_${j}`, lat: c.lat + i * step, lng: c.lng + j * step * lngScale,
+        adj: [], green: false, _adj: new Set(),
+      });
+    }
+  }
+  const addEdge = (a, b) => {
+    const w = haversine(a.lat, a.lng, b.lat, b.lng);
+    if (!a._adj.has(b.id)) { a._adj.add(b.id); a.adj.push({ to: b.id, w }); }
+    if (!b._adj.has(a.id)) { b._adj.add(a.id); b.adj.push({ to: a.id, w }); }
+  };
+  for (let i = -n; i <= n; i++) {
+    for (let j = -n; j <= n; j++) {
+      if (j < n) addEdge(nodes[idx(i, j)], nodes[idx(i, j + 1)]);
+      if (i < n) addEdge(nodes[idx(i, j)], nodes[idx(i + 1, j)]);
+    }
+  }
+  nodes.forEach(x => delete x._adj);
+  nav.nodes = nodes;
+  nav.byId = new Map(nodes.map(x => [x.id, x]));
+  nav.polygons = [];
+  nav.ready = true;
+  nav.source = 'fallback';
+  rebuildSpatialIndex();
+}
+
+async function loadNavigation() {
+  const b0 = zoneBounds();
+  const key = `${b0.getSouth().toFixed(4)},${b0.getWest().toFixed(4)},${b0.getNorth().toFixed(4)},${b0.getEast().toFixed(4)}`;
+  if (nav.ready && nav.key === key && nav.nodes.length) {
+    if (!waypoints.length) spawnSupplies(waveSupplyCount());
+    spawnInitialZombies();
+    return;
+  }
+
+  const token = ++nav.token;
+  nav.loading = true;
+  nav.ready = false;
+  nav.nodes = []; nav.byId = new Map(); nav.polygons = []; nav.grid.clear();
+  toast('Mapping streets, paths, parks & fields…', 'info', 3000);
+
+  const b = b0;
+  const pad = 0.0004;
+  const s = (b.getSouth() - pad).toFixed(6), w = (b.getWest() - pad).toFixed(6);
+  const n = (b.getNorth() + pad).toFixed(6), e = (b.getEast() + pad).toFixed(6);
+  const bbox = `${s},${w},${n},${e}`;
+  const query = `[out:json][timeout:30];
+(
+  way["highway"~"^(footway|path|pedestrian|steps|residential|living_street|service|unclassified|tertiary|tertiary_link|secondary|secondary_link|primary|primary_link|cycleway|track|bridleway|road)$"](${bbox});
+  way["leisure"~"^(park|garden|playground|pitch|common|nature_reserve|dog_park|recreation_ground)$"](${bbox});
+  way["landuse"~"^(grass|meadow|recreation_ground|farmland|orchard|village_green|cemetery)$"](${bbox});
+  way["natural"~"^(grassland|scrub|heath|wood)$"](${bbox});
+);
+out body;
+>;
+out skel qt;`;
+
+  const endpoints = [
+    'https://overpass-api.de/api/interpreter',
+    'https://overpass.kumi.systems/api/interpreter',
+    'https://overpass.private.coffee/api/interpreter',
+  ];
+
+  const controllers = [];
+  const fetchOne = async (url) => {
+    const ctrl = new AbortController();
+    controllers.push(ctrl);
+    const timer = setTimeout(() => ctrl.abort(), 16000);
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'data=' + encodeURIComponent(query),
+        signal: ctrl.signal,
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      return await res.json();
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+
+  let data = null;
+  try {
+    data = await Promise.any(endpoints.map(fetchOne));
+  } catch (err) {
+    console.warn('All Overpass mirrors failed:', err && err.message);
+  }
+  controllers.forEach(c => { try { c.abort(); } catch (e) {} });
+
+  if (token !== nav.token) return;
+  if (data && data.elements && data.elements.length) buildNav(data.elements);
+  if (!nav.ready) {
+    buildFallbackNav();
+    toast('Street data unavailable — approximate grid active', 'warn', 4200);
+  } else {
+    toast(`Street network ready · ${nav.nodes.length.toLocaleString()} nodes`, 'good', 2600);
+  }
+  nav.key = key;
+  nav.loading = false;
+
+  if (state.gameActive) {
+    if (!waypoints.length) spawnSupplies(waveSupplyCount());
+    spawnInitialZombies();
+  }
+}
+
+/* ---------------- A* pathfinding ---------------- */
+class MinHeap {
+  constructor() { this.a = []; }
+  get size() { return this.a.length; }
+  push(node, pri) {
+    const a = this.a;
+    a.push({ node, pri });
+    let i = a.length - 1;
+    while (i > 0) {
+      const p = (i - 1) >> 1;
+      if (a[p].pri <= a[i].pri) break;
+      [a[p], a[i]] = [a[i], a[p]];
+      i = p;
+    }
+  }
+  pop() {
+    const a = this.a;
+    const top = a[0];
+    const last = a.pop();
+    if (a.length) {
+      a[0] = last;
+      let i = 0;
+      for (;;) {
+        const l = i * 2 + 1, r = l + 1;
+        let s = i;
+        if (l < a.length && a[l].pri < a[s].pri) s = l;
+        if (r < a.length && a[r].pri < a[s].pri) s = r;
+        if (s === i) break;
+        [a[s], a[i]] = [a[i], a[s]];
+        i = s;
+      }
+    }
+    return top ? top.node : null;
+  }
+}
+
+let astarGen = 0;
+const pathCache = new Map();
+
+function findPath(startId, goalId) {
+  const start = nav.byId.get(startId), goal = nav.byId.get(goalId);
+  if (!start || !goal) return null;
+  if (start === goal) return [startId];
+  const gen = ++astarGen;
+  const open = new MinHeap();
+  start._seen = gen; start._g = 0; start._closed = 0; start._parent = null;
+  open.push(start, haversine(start.lat, start.lng, goal.lat, goal.lng));
+  let explored = 0;
+  while (open.size) {
+    const cur = open.pop();
+    if (!cur || cur._seen !== gen || cur._closed === gen) continue;
+    if (cur === goal) {
+      const path = [];
+      let p = cur;
+      while (p) { path.push(p.id); p = p._parent; }
+      return path.reverse();
+    }
+    cur._closed = gen;
+    if (++explored > 18000) break;
+    for (const edge of cur.adj) {
+      const nb = nav.byId.get(edge.to);
+      if (!nb) continue;
+      const g = cur._g + edge.w;
+      if (nb._seen !== gen || g < nb._g) {
+        nb._seen = gen; nb._g = g; nb._parent = cur;
+        open.push(nb, g + haversine(nb.lat, nb.lng, goal.lat, goal.lng));
+      }
+    }
+  }
+  return null;
+}
+function findPathCached(startId, goalId) {
+  const key = startId + '|' + goalId;
+  const now = performance.now();
+  const hit = pathCache.get(key);
+  if (hit && now - hit.t < 6000) return hit.path;
+  const path = findPath(startId, goalId);
+  if (path) {
+    pathCache.set(key, { path, t: now });
+    if (pathCache.size > 160) {
+      for (const [k, v] of pathCache) if (now - v.t > 15000) pathCache.delete(k);
+    }
+  }
+  return path;
+}
+
+/* ============================================================
+   ZOMBIE HORDE — graph-bound pursuit
+   ============================================================ */
+function spawnInitialZombies() {
+  if (!state.gameActive) return;
+  const n = Math.min(5, 2 + state.wave);
+  for (let i = 0; i < n; i++) spawnZombie();
+}
+
+function spawnZombie() {
+  if (!state.gameActive || !nav.ready || !state.player) return;
+  const cap = Math.min(16, 4 + state.wave * 2);
+  if (zombies.length >= cap) return;
+  const p = state.player;
+  const inZone = nav.nodes.filter(n => isInZone(n.lat, n.lng));
+  const pool = inZone.length ? inZone : nav.nodes;
+  let candidates = pool.filter(n => {
+    const d = haversine(p.lat, p.lng, n.lat, n.lng);
+    return d >= 110 && d <= 480;
+  });
+  if (!candidates.length) {
+    candidates = pool.filter(n => {
+      const d = haversine(p.lat, p.lng, n.lat, n.lng);
+      return d >= 55 && d <= 600;
+    });
+  }
+  if (!candidates.length) return;
+  const node = candidates[Math.floor(Math.random() * candidates.length)];
+  const icon = L.divIcon({
+    className: 'zombie-marker',
+    html: '<div class="zombie-ring"></div><div class="zombie-core"><i class="fa-solid fa-biohazard"></i></div>',
+    iconSize: [30, 30], iconAnchor: [15, 15],
+  });
+  const marker = L.marker([node.lat, node.lng], { icon, zIndexOffset: 200, interactive: false }).addTo(map);
+  zombies.push({
+    id: uid(), marker, lat: node.lat, lng: node.lng,
+    path: [], pathIndex: 0, repathAt: 0, attackAt: 0,
+    speedFactor: rand(0.88, 1.12),
+  });
+}
+
+function stepToward(z, lat, lng, stepM) {
+  const d = haversine(z.lat, z.lng, lat, lng);
+  if (d < 0.01) return;
+  const f = Math.min(1, stepM / d);
+  z.lat += (lat - z.lat) * f;
+  z.lng += (lng - z.lng) * f;
+}
+
+function followPath(z, stepM) {
+  if (!z.path || !z.path.length) { greedyStep(z, stepM); return; }
+  let node = nav.byId.get(z.path[z.pathIndex]);
+  let guard = 0;
+  while (node && haversine(z.lat, z.lng, node.lat, node.lng) < 5 && guard++ < 60) {
+    z.pathIndex++;
+    node = nav.byId.get(z.path[z.pathIndex]);
+  }
+  if (!node) { z.path = []; greedyStep(z, stepM); return; }
+  stepToward(z, node.lat, node.lng, stepM);
+}
+
+function greedyStep(z, stepM) {
+  const p = state.player;
+  const n = nearestNode(z.lat, z.lng);
+  if (!n) { stepToward(z, p.lat, p.lng, stepM); return; }
+  let best = n;
+  let bd = haversine(n.lat, n.lng, p.lat, p.lng);
+  for (const e of n.adj) {
+    const m = nav.byId.get(e.to);
+    if (!m) continue;
+    const d = haversine(m.lat, m.lng, p.lat, p.lng);
+    if (d < bd) { bd = d; best = m; }
+  }
+  stepToward(z, best.lat, best.lng, stepM);
+}
+
+function updateZombies(dt) {
+  if (!nav.ready || !state.player) return;
+  const p = state.player;
+  const now = performance.now();
+  const pGreen = greenPoly(p.lat, p.lng);
+  const pOffNetwork = nearestNodeDistance(p.lat, p.lng) > 40;
+  let nearest = Infinity, nearestZ = null;
+
+  for (const z of zombies) {
+    const dP = haversine(z.lat, z.lng, p.lat, p.lng);
+    if (dP < nearest) { nearest = dP; nearestZ = z; }
+
+    if (dP <= 7.5) {
+      if (now >= z.attackAt) {
+        z.attackAt = now + 1500;
+        damagePlayer(6 + Math.min(12, state.wave * 1.4));
+      }
+      continue;
+    }
+
+    const step = state.zombieMps * z.speedFactor * dt;
+    const chaseDirect = dP < 24 || (pOffNetwork && dP < 130) || (pGreen && pointInPolygon(z.lat, z.lng, pGreen.pts));
+
+    if (chaseDirect) {
+      stepToward(z, p.lat, p.lng, step);
+    } else {
+      if (now >= z.repathAt || !z.path || z.pathIndex >= z.path.length) {
+        const sn = nearestNode(z.lat, z.lng);
+        const gn = nearestNode(p.lat, p.lng);
+        if (sn && gn) {
+          z.path = findPathCached(sn.id, gn.id) || [];
+          z.pathIndex = 0;
+          z.repathAt = now + rand(3600, 5200);
+        } else {
+          z.path = [];
+        }
+      }
+      if (z.path && z.path.length) followPath(z, step);
+      else greedyStep(z, step);
+    }
+
+    z.marker.setLatLng([z.lat, z.lng]);
+  }
+
+  state.nearestZombie = nearest;
+  state.nearestZombieDir = nearestZ ? bearing(p.lat, p.lng, nearestZ.lat, nearestZ.lng) : 0;
+}
+
+function damagePlayer(amount) {
+  if (!state.gameActive) return;
+  state.hp = Math.max(0, state.hp - amount);
+  audio.damage();
+  damageFlash.classList.add('hit');
+  setTimeout(() => damageFlash.classList.remove('hit'), 130);
+  if (Date.now() - state.lastDamageToast > 1300) {
+    state.lastDamageToast = Date.now();
+    toast(`-${Math.round(amount)} HP`, 'bad', 1200);
+  }
+  updateHUD();
+  if (state.hp <= 0) endGame();
+}
+
+/* ---------------- simulation movement ---------------- */
+function applySimMovement(dt) {
+  let dx = 0, dy = 0;
+  if (keys.has('w') || keys.has('arrowup')) dy += 1;
+  if (keys.has('s') || keys.has('arrowdown')) dy -= 1;
+  if (keys.has('a') || keys.has('arrowleft')) dx -= 1;
+  if (keys.has('d') || keys.has('arrowright')) dx += 1;
+  dx += joy.x;
+  dy += -joy.y;
+  const mag = Math.hypot(dx, dy);
+  if (mag > 0.05 && state.player) {
+    const norm = Math.min(1, mag);
+    const ux = dx / mag, uy = dy / mag;
+    const speed = 3.4 * norm;
+    const lat = state.player.lat + (uy * speed * dt) / 111320;
+    const lng = state.player.lng + (ux * speed * dt) / (111320 * Math.max(0.2, Math.cos(state.player.lat * Math.PI / 180)));
+    setPlayerPosition(lat, lng, { speedMps: speed, ts: Date.now(), force: true });
+  } else {
+    state.speedMph = Math.max(0, state.speedMph - dt * 6);
+  }
+}
+
+/* ---------------- threat + HUD ---------------- */
+function updateThreat() {
+  const d = state.nearestZombie;
+  if (d < 48 && zombies.length) {
+    threatBanner.classList.remove('hidden');
+    threatBanner.classList.toggle('crit', d < 24);
+    threatText.textContent = `NEAREST ${fmtFeet(d)} · ${compass(state.nearestZombieDir)}`;
+    audio.startSiren();
+  } else {
+    threatBanner.classList.add('hidden');
+    audio.stopSiren();
+  }
+  if (isFinite(d)) {
+    radarDist.textContent = fmtFeet(d);
+    radarDist.style.color = d < 24 ? 'var(--red)' : d < 60 ? 'var(--amber)' : 'var(--text)';
+    radarSub.textContent = `${compass(state.nearestZombieDir)} · ${d < 24 ? 'contact imminent' : d < 60 ? 'closing in' : 'tracking'}`;
+  } else {
+    radarDist.textContent = '—';
+    radarDist.style.color = 'var(--text)';
+    radarSub.textContent = 'No contacts';
+  }
+}
+
+function updateSquad() {
+  let near = false;
+  if (state.player && net.connected) {
+    for (const r of net.remotes.values()) {
+      if (Date.now() - r.lastSeen > 12000) continue;
+      if (haversine(state.player.lat, state.player.lng, r.lat, r.lng) < 45) { near = true; break; }
+    }
+  }
+  state.squadLinked = near;
+  squadChip.classList.toggle('hidden', !near);
+}
+
+function updateHUD() {
+  hpBar.style.width = `${state.hp}%`;
+  hpBar.className = 'hp-fill' + (state.hp <= 30 ? ' crit' : state.hp <= 60 ? ' warn' : '');
+  hpText.textContent = String(Math.round(state.hp));
+  hudScore.textContent = Math.round(state.score).toLocaleString();
+  hudDistance.textContent = fmtMiles(state.distanceM);
+  hudSupplies.textContent = `${state.supplies} / ${state.totalSupplies}`;
+  hudZombies.textContent = String(zombies.length);
+  hudWave.textContent = String(state.wave);
+  hudTime.textContent = fmtTime(state.elapsed);
+  hudSpeed.textContent = state.speedMph.toFixed(1);
+  speedFill.style.width = `${clamp(state.speedMph / 12 * 100, 0, 100)}%`;
+
+  objSupplies.textContent = String(state.supplies);
+  objSupplies.nextElementSibling.textContent = ` / ${state.totalSupplies}`;
+  objHorde.textContent = String(zombies.length);
+  objDistance.textContent = fmtMiles(state.distanceM);
+  missionWave.textContent = `WAVE ${state.wave}`;
+  const pct = state.totalSupplies ? (state.supplies / state.totalSupplies) * 100 : 0;
+  objProgress.style.width = `${pct}%`;
+  updateThreat();
+}
+
+/* ============================================================
+   GAME LIFECYCLE
+   ============================================================ */
+function clearWorld() {
+  zombies.forEach(z => { if (z.marker) map.removeLayer(z.marker); });
+  zombies.length = 0;
+  waypoints.forEach(w => { if (w.marker) map.removeLayer(w.marker); });
+  waypoints = [];
+  pathCache.clear();
+  threatBanner.classList.add('hidden');
+  audio.stopSiren();
+}
+
+function startGame() {
+  if (!state.home) return;
+  audio.init();
+  requestWakeLock();
+  state.name = sanitizeName(nameInput.value) || defaultName();
+  state.room = sanitizeRoom(roomInput.value);
+  nameInput.value = state.name;
+  roomInput.value = state.room;
+  roomInputPanel.value = state.room;
+  savePrefs();
+
+  setupModal.classList.remove('open');
+  gameOverModal.classList.remove('open');
+  clearWorld();
+  closeSheet();
+
+  state.gameActive = true;
+  state.hp = 100;
+  state.score = 0;
+  state.supplies = 0;
+  state.totalSupplies = 0;
+  state.distanceM = 0;
+  state.distanceScorePool = 0;
+  state.speedMph = 0;
+  state.wave = 1;
+  state.elapsed = 0;
+  state.nearestZombie = Infinity;
+  state.startedAt = Date.now();
+  state.lastTick = performance.now();
+  state.zombieMps = state.zombieMph * MPS_PER_MPH;
+  state.follow = true;
+
+  if (!state.player) state.player = { ...state.home };
+  state.lastPosTs = Date.now();
+  createPlayerMarker(state.player.lat, state.player.lng);
+  recenterMap(16);
+  hudBottom.classList.remove('hidden');
+  $('#btn-sim').classList.toggle('on', state.simulation);
+  if (state.simulation) {
+    $('#joystick').classList.remove('hidden');
+    $('#sim-hint').classList.remove('hidden');
+  } else {
+    startGps();
+  }
+
+  updateHUD();
+  loadNavigation();
+  connectRoom();
+  startPublishLoop();
+  toast('Run started — keep moving', 'good', 2200);
+  setTimeout(() => { if (state.gameActive) toast('Collect caches · avoid the horde', 'info', 2600); }, 2600);
+}
+
+function endGame() {
+  if (!state.gameActive) return;
+  state.gameActive = false;
+  state.speedMph = 0;
+  stopGps();
+  releaseWakeLock();
+  audio.stopSiren();
+  audio.over();
+  threatBanner.classList.add('hidden');
+  $('#joystick').classList.add('hidden');
+  $('#sim-hint').classList.add('hidden');
+  publishFinalState();
+
+  const result = saveLocalScore();
+  const isBest = result.isBest;
+  $('#new-best').classList.toggle('hidden', !isBest);
+  $('#end-icon').className = 'end-icon';
+  $('#end-icon').innerHTML = '<i class="fa-solid fa-skull"></i>';
+  $('#end-title').className = '';
+  $('#end-title').textContent = 'You Were Overrun';
+  $('#end-subtitle').textContent = 'The horde caught you in the street. Supplies kept you going, but not far enough.';
+  $('#end-score').textContent = Math.round(state.score).toLocaleString();
+  $('#end-distance').textContent = fmtMiles(state.distanceM);
+  $('#end-supplies').textContent = String(state.supplies);
+  $('#end-time').textContent = fmtTime(state.elapsed);
+  $('#end-wave').textContent = String(state.wave);
+  $('#end-best').textContent = Math.round(result.best).toLocaleString();
+  updateHUD();
+  gameOverModal.classList.add('open');
+  renderScoreboard();
+}
+
+function resetRun(showSetup) {
+  state.gameActive = false;
+  stopGps();
+  releaseWakeLock();
+  clearWorld();
+  if (state.playerMarker) { map.removeLayer(state.playerMarker); state.playerMarker = null; }
+  if (state.accuracyCircle) { map.removeLayer(state.accuracyCircle); state.accuracyCircle = null; }
+  state.player = state.home ? { ...state.home } : null;
+  hudBottom.classList.add('hidden');
+  gameOverModal.classList.remove('open');
+  threatBanner.classList.add('hidden');
+  $('#joystick').classList.add('hidden');
+  $('#sim-hint').classList.add('hidden');
+  state.hp = 100;
+  state.score = 0;
+  state.supplies = 0;
+  state.totalSupplies = 0;
+  state.distanceM = 0;
+  state.distanceScorePool = 0;
+  state.speedMph = 0;
+  state.wave = 1;
+  state.elapsed = 0;
+  state.nearestZombie = Infinity;
+  state.lastDamageToast = 0;
+  state.lastScoreRender = 0;
+  state.squadLinked = false;
+  state.gpsFails = 0;
+  squadChip.classList.add('hidden');
+  nav.loading = false;
+  nav.token++;
+  updateHUD();
+  if (showSetup) {
+    setupModal.classList.add('open');
+    updateStartState();
+    renderScoreboard();
+  }
+}
+
+/* ---------------- local high scores ---------------- */
+function localScores() {
+  try {
+    const raw = JSON.parse(localStorage.getItem('zrun.scores.v2') || '[]');
+    return Array.isArray(raw) ? raw : [];
+  } catch (e) { return []; }
+}
+function saveLocalScore() {
+  const scores = localScores();
+  const best = scores.reduce((m, s) => Math.max(m, Number(s.score) || 0), 0);
+  const entry = {
+    name: state.name || 'Runner',
+    score: Math.round(state.score),
+    dist: +(state.distanceM / M_PER_MI).toFixed(2),
+    sup: state.supplies,
+    wave: state.wave,
+    mode: state.simulation ? 'sim' : 'gps',
+    date: Date.now(),
+  };
+  if (entry.score > 0) {
+    scores.push(entry);
+    scores.sort((a, b) => b.score - a.score);
+    try { localStorage.setItem('zrun.scores.v2', JSON.stringify(scores.slice(0, 50))); } catch (e) {}
+  }
+  return { entry, best: Math.max(best, entry.score), isBest: entry.score > best && entry.score > 0 };
+}
+
+/* ---------------- main loop ---------------- */
+function loop() {
+  if (!state.gameActive) return;
+  const now = performance.now();
+  const dt = clamp((now - state.lastTick) / 1000, 0.05, 0.6);
+  state.lastTick = now;
+  state.elapsed = (Date.now() - state.startedAt) / 1000;
+
+  if (state.simulation) applySimMovement(dt);
+  updateZombies(dt);
+  updateSquad();
+  if (state.squadLinked) state.score += 2 * dt;
+  updateHUD();
+  if (now - (state.lastScoreRender || 0) > 2200) {
+    state.lastScoreRender = now;
+    renderScoreboard();
+  }
+}
+
+/* ============================================================
+   LIVE ROOMS — MQTT over WebSocket (no backend required)
+   ============================================================ */
+const net = {
+  client: null, pending: null, attempt: 0, connected: false, connecting: false,
+  room: '', id: uid(), remotes: new Map(),
+  pubTimer: null, pruneTimer: null,
+};
+
+const topic = () => `zrun/v2/room/${net.room}`;
+
+function setRoomStatus(kind, text) {
+  roomChip.className = 'hud-chip room-chip' + (kind === 'live' ? ' live' : kind === 'connecting' ? ' connecting' : '');
+  roomChipLabel.textContent = kind === 'solo' ? 'SOLO' : kind === 'error' ? 'OFFLINE' : kind === 'connecting' ? 'LINKING' : (net.room || 'SOLO');
+  roomStatusEl.className = 'room-status ' + kind;
+  roomStatusText.textContent = text || (kind === 'live'
+    ? `Live · ${net.remotes.size + 1} runner${net.remotes.size ? 's' : ''}`
+    : kind === 'connecting'
+      ? `Connecting to ${net.room}…`
+      : kind === 'error'
+        ? 'Relay unreachable — solo'
+        : 'Solo run — join a room to compete');
+}
+
+function connectRoom() {
+  const code = sanitizeRoom(state.room);
+  state.room = code;
+  if (!code) { disconnectRoom(false); setRoomStatus('solo'); return; }
+  if (net.connected && net.room === code) return;
+  if (net.connecting && net.room === code) return;
+  disconnectRoom(false);
+  if (typeof mqtt === 'undefined') {
+    setRoomStatus('error', 'Live relay failed to load');
+    toast('Live relay unavailable — solo mode', 'warn', 3600);
+    return;
+  }
+  net.room = code;
+  net.connecting = true;
+  setRoomStatus('connecting');
+  const gen = ++net.attempt;
+  const brokers = ['wss://broker.emqx.io:8084/mqtt', 'wss://broker.hivemq.com:8884/mqtt'];
+  let idx = 0;
+
+  const attempt = () => {
+    if (gen !== net.attempt) return;
+    if (idx >= brokers.length) {
+      net.connecting = false;
+      setRoomStatus('error');
+      toast('Could not reach the live relay — playing solo', 'warn', 4200);
+      return;
+    }
+    const url = brokers[idx++];
+    let client;
+    try {
+      client = mqtt.connect(url, {
+        clientId: 'zrun_' + net.id, clean: true, keepalive: 30,
+        reconnectPeriod: 5000, connectTimeout: 8000, protocolVersion: 4,
+      });
+    } catch (e) { attempt(); return; }
+    net.pending = client;
+
+    let settled = false;
+    let abandoned = false;
+    let timer = null;
+    const failover = () => {
+      if (settled || abandoned || gen !== net.attempt) return;
+      abandoned = true;
+      clearTimeout(timer);
+      if (net.pending === client) net.pending = null;
+      try { client.end(true); } catch (e) {}
+      attempt();
+    };
+    timer = setTimeout(failover, 10000);
+
+    client.on('connect', () => {
+      if (abandoned || gen !== net.attempt) { try { client.end(true); } catch (e) {} return; }
+      clearTimeout(timer);
+      if (net.pending === client) net.pending = null;
+      net.client = client;
+      net.connected = true;
+      net.connecting = false;
+      if (!settled) {
+        settled = true;
+        client.on('message', onNetMessage);
+        client.on('close', () => {
+          if (net.client !== client) return;
+          net.connected = false;
+          setRoomStatus('connecting', 'Reconnecting…');
+        });
+        client.on('error', () => {});
+        toast(`Linked to room ${net.room}`, 'good', 2600);
+      }
+      client.subscribe(topic(), { qos: 0 });
+      setRoomStatus('live');
+      publishState();
+      renderScoreboard();
+    });
+    client.on('error', () => { if (!settled) failover(); });
+  };
+  attempt();
+}
+
+function disconnectRoom(publish) {
+  net.attempt++;
+  if (publish && net.connected && net.client) {
+    try { net.client.publish(topic(), JSON.stringify({ t: 'leave', id: net.id }), { qos: 0 }); } catch (e) {}
+  }
+  if (net.pending) { try { net.pending.end(true); } catch (e) {} }
+  net.pending = null;
+  if (net.client) { try { net.client.end(true); } catch (e) {} }
+  net.client = null;
+  net.connected = false;
+  net.connecting = false;
+  clearRemotes();
+  if (state.room) setRoomStatus('solo', 'Solo run — join a room to compete');
+}
+
+function clearRemotes() {
+  for (const r of net.remotes.values()) if (r.marker) map.removeLayer(r.marker);
+  net.remotes.clear();
+}
+
+function onNetMessage(topicName, payload) {
+  let m;
+  try { m = JSON.parse(payload.toString()); } catch (e) { return; }
+  if (!m || m.id === net.id) return;
+  if (m.t === 'leave') {
+    const r = net.remotes.get(m.id);
+    if (r) { if (r.marker) map.removeLayer(r.marker); net.remotes.delete(m.id); renderScoreboard(); }
+    return;
+  }
+  if (m.t !== 's') return;
+  if (!Number.isFinite(m.lat) || !Number.isFinite(m.lng)) return;
+  const r = net.remotes.get(m.id) || { id: m.id };
+  Object.assign(r, m, { lastSeen: Date.now() });
+  net.remotes.set(m.id, r);
+  upsertRemoteMarker(r);
+  renderScoreboard();
+}
+
+function upsertRemoteMarker(r) {
+  if (!r.marker) {
+    const hue = hashHue(String(r.id));
+    const icon = L.divIcon({
+      className: '',
+      html: `<div class="remote-marker" style="--c:hsl(${hue},85%,66%)"><div class="remote-dot"></div><div class="remote-name">${escapeHtml(r.name || 'Runner')}</div></div>`,
+      iconSize: [10, 10], iconAnchor: [5, 5],
+    });
+    r.marker = L.marker([r.lat, r.lng], { icon, zIndexOffset: 450, interactive: false }).addTo(map);
+  } else {
+    r.marker.setLatLng([r.lat, r.lng]);
+  }
+  const el = r.marker.getElement();
+  if (el) el.classList.toggle('down', r.st === 'down');
+}
+
+function pruneRemotes() {
+  const now = Date.now();
+  let changed = false;
+  for (const [id, r] of net.remotes) {
+    if (now - (r.lastSeen || 0) > 16000) {
+      if (r.marker) map.removeLayer(r.marker);
+      net.remotes.delete(id);
+      changed = true;
+    }
+  }
+  if (changed) renderScoreboard();
+}
+
+function publishState(final = false) {
+  if (!net.connected || !net.client || !net.room || !state.player) return;
+  const msg = {
+    t: 's', id: net.id, name: state.name || 'Runner',
+    lat: +state.player.lat.toFixed(5), lng: +state.player.lng.toFixed(5),
+    hp: Math.round(state.hp), score: Math.round(state.score),
+    dist: +(state.distanceM / M_PER_MI).toFixed(2), sup: state.supplies,
+    wave: state.wave, speed: +state.speedMph.toFixed(1),
+    st: final ? 'down' : (state.gameActive ? 'run' : 'idle'), ts: Date.now(),
+  };
+  try { net.client.publish(topic(), JSON.stringify(msg), { qos: 0 }); } catch (e) {}
+}
+function publishFinalState() { publishState(true); }
+
+function startPublishLoop() {
+  clearInterval(net.pubTimer);
+  net.pubTimer = setInterval(() => { if (state.gameActive) publishState(); }, 2000);
+}
+
+/* ============================================================
+   SCOREBOARD
+   ============================================================ */
+function renderScoreboard() {
+  if (!scoreList) return;
+  if (state.activeTab === 'local') {
+    const scores = localScores().slice(0, 12);
+    if (!scores.length) {
+      scoreList.innerHTML = '<li class="score-empty">No saved runs yet.<br>Finish a run to set a personal best.</li>';
+      return;
+    }
+    scoreList.innerHTML = scores.map((s, i) => `
+      <li class="score-row">
+        <span class="rank">${i + 1}</span>
+        <div class="who">
+          <div class="nm">${escapeHtml(s.name || 'Runner')}</div>
+          <div class="sub">${(Number(s.dist) || 0).toFixed(2)} mi · wave ${Number(s.wave) || 1} · ${new Date(s.date).toLocaleDateString()}</div>
         </div>
-    </div>
+        <span class="pts">${Math.round(Number(s.score) || 0).toLocaleString()}</span>
+      </li>`).join('');
+    return;
+  }
 
-    <!-- GAME OVER / VICTORY MODAL -->
-    <div id="gameover-modal" class="hidden absolute inset-0 z-40 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl">
-            <div id="end-icon-container" class="inline-flex p-4 bg-red-950/60 rounded-full border border-red-800">
-                <i id="end-icon" class="fa-solid fa-skull text-5xl text-red-500"></i>
-            </div>
-            <h2 id="end-title" class="text-2xl font-black text-slate-100 uppercase tracking-wide">YOU WERE OVERRUN</h2>
-            <p id="end-subtitle" class="text-xs text-slate-400">The horde caught up with you in the streets.</p>
-            
-            <div class="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2 font-mono text-sm">
-                <div class="flex justify-between text-slate-400">
-                    <span>Total Score:</span>
-                    <span id="end-score" class="text-amber-400 font-bold">0</span>
-                </div>
-                <div class="flex justify-between text-slate-400">
-                    <span>Supplies Collected:</span>
-                    <span id="end-supplies" class="text-cyan-400 font-bold">0</span>
-                </div>
-                <div class="flex justify-between text-slate-400">
-                    <span>Distance Covered:</span>
-                    <span id="end-dist" class="text-emerald-400 font-bold">0.0 km</span>
-                </div>
-            </div>
+  const entries = [];
+  entries.push({
+    id: 'me', name: state.name || 'You', score: Math.round(state.score),
+    dist: state.distanceM / M_PER_MI, wave: state.wave,
+    st: state.gameActive ? 'run' : 'idle', me: true,
+  });
+  for (const r of net.remotes.values()) {
+    if (Date.now() - (r.lastSeen || 0) > 16000) continue;
+    entries.push({
+      id: r.id, name: r.name || 'Runner', score: Number(r.score) || 0,
+      dist: Number(r.dist) || 0, wave: Number(r.wave) || 1,
+      st: r.st || 'run', me: false,
+    });
+  }
+  entries.sort((a, b) => b.score - a.score || b.dist - a.dist);
+  scoreList.innerHTML = entries.slice(0, 14).map((e, i) => `
+    <li class="score-row ${e.me ? 'me' : ''}">
+      <span class="rank">${i + 1}</span>
+      <div class="who">
+        <div class="nm">${escapeHtml(e.name)}${e.me ? '<span class="you">YOU</span>' : ''}</div>
+        <div class="sub">${e.dist.toFixed(2)} mi · wave ${e.wave}${e.st === 'down' ? ' · down' : ''}</div>
+      </div>
+      <span class="pts">${Math.round(e.score).toLocaleString()}</span>
+    </li>`).join('');
+  setRoomStatus(net.connected ? 'live' : net.connecting ? 'connecting' : 'solo',
+    net.connected ? `Live · ${net.remotes.size + 1} runner${net.remotes.size ? 's' : ''}` : undefined);
+}
 
-            <button id="btn-restart" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white font-bold py-3 rounded-xl transition">
-                Try Again
-            </button>
-        </div>
-    </div>
+/* ---------------- sheet (mobile scoreboard) ---------------- */
+function openSheet() {
+  $('#panel-right').classList.add('open');
+  $('#sheet-scrim').classList.add('show');
+  renderScoreboard();
+}
+function closeSheet() {
+  $('#panel-right').classList.remove('open');
+  $('#sheet-scrim').classList.remove('show');
+}
 
-    <!-- AUDIO ENGINE & GAME LOGIC -->
-    <script>
-        /**
-         * Web Audio API Synthesizer (No external sound files required)
-         */
-        class SoundEngine {
-            constructor() {
-                this.ctx = null;
-                this.muted = false;
-                this.sirenOsc = null;
-                this.sirenGain = null;
-                this.isSirenPlaying = false;
-            }
+/* ============================================================
+   JOYSTICK + KEYBOARD
+   ============================================================ */
+function initJoystick() {
+  const base = $('#joy-base'), stick = $('#joy-stick');
+  let pid = null, cx = 0, cy = 0;
+  const max = 36;
 
-            init() {
-                if (!this.ctx) {
-                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
-                }
-            }
+  const move = (e) => {
+    let dx = e.clientX - cx, dy = e.clientY - cy;
+    const d = Math.hypot(dx, dy);
+    if (d > max) { dx = (dx / d) * max; dy = (dy / d) * max; }
+    stick.style.transform = `translate(${dx}px,${dy}px)`;
+    joy.x = dx / max;
+    joy.y = dy / max;
+  };
+  const start = (e) => {
+    pid = e.pointerId;
+    try { base.setPointerCapture(pid); } catch (err) {}
+    const r = base.getBoundingClientRect();
+    cx = r.left + r.width / 2;
+    cy = r.top + r.height / 2;
+    move(e);
+    e.preventDefault();
+  };
+  const end = (e) => {
+    if (pid !== null && e.pointerId !== pid) return;
+    pid = null;
+    stick.style.transform = 'translate(0,0)';
+    joy.x = 0; joy.y = 0;
+  };
+  base.addEventListener('pointerdown', start);
+  base.addEventListener('pointermove', (e) => { if (pid === e.pointerId) move(e); });
+  base.addEventListener('pointerup', end);
+  base.addEventListener('pointercancel', end);
+  base.addEventListener('lostpointercapture', end);
+}
 
-            playCollect() {
-                if (this.muted || !this.ctx) return;
-                const now = this.ctx.currentTime;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(523.25, now); // C5
-                osc.frequency.exponentialRampToValueAtTime(880, now + 0.15); // A5
-                gain.gain.setValueAtTime(0.2, now);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start(now);
-                osc.stop(now + 0.2);
-            }
+function initKeyboard() {
+  const typing = (e) => e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA');
+  window.addEventListener('keydown', (e) => {
+    if (typing(e)) return;
+    const k = e.key.toLowerCase();
+    if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(k) && state.gameActive) e.preventDefault();
+    keys.add(k);
+  });
+  window.addEventListener('keyup', (e) => { if (!typing(e)) keys.delete(e.key.toLowerCase()); });
+  window.addEventListener('blur', () => keys.clear());
+}
 
-            playDamage() {
-                if (this.muted || !this.ctx) return;
-                const now = this.ctx.currentTime;
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(140, now);
-                osc.frequency.linearRampToValueAtTime(40, now + 0.25);
-                gain.gain.setValueAtTime(0.3, now);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
-                osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start(now);
-                osc.stop(now + 0.25);
-            }
+/* ============================================================
+   UI BINDINGS
+   ============================================================ */
+function bindUI() {
+  $('#btn-gps-home').addEventListener('click', () => {
+    const btn = $('#btn-gps-home');
+    const old = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Locating…';
+    if (!navigator.geolocation) {
+      btn.innerHTML = old;
+      toast('Geolocation is not supported — use map pin', 'warn');
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(pos => {
+      btn.innerHTML = old;
+      setHome(pos.coords.latitude, pos.coords.longitude, 'gps');
+      setGpsChip(`GPS ±${Math.round(pos.coords.accuracy || 0)} m`, 'ok');
+      setSimulation(false, false);
+    }, err => {
+      btn.innerHTML = old;
+      onGpsError(err);
+      toast('Could not get GPS — pick your base on the map', 'warn', 3600);
+    }, { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 });
+  });
 
-            startSiren() {
-                if (this.muted || !this.ctx || this.isSirenPlaying) return;
-                try {
-                    const now = this.ctx.currentTime;
-                    this.sirenOsc = this.ctx.createOscillator();
-                    this.sirenGain = this.ctx.createGain();
-                    this.sirenOsc.type = 'triangle';
-                    
-                    // Modulate pitch for siren effect
-                    this.sirenOsc.frequency.setValueAtTime(400, now);
-                    this.sirenOsc.frequency.linearRampToValueAtTime(800, now + 0.5);
-                    
-                    this.sirenGain.gain.setValueAtTime(0.05, now);
+  $('#btn-map-home').addEventListener('click', beginPick);
+  $('#btn-pick-cancel').addEventListener('click', endPick);
 
-                    this.sirenOsc.connect(this.sirenGain);
-                    this.sirenGain.connect(this.ctx.destination);
-                    this.sirenOsc.start(now);
-                    this.isSirenPlaying = true;
-                } catch(e) {}
-            }
+  radiusRange.addEventListener('input', () => {
+    state.radiusMi = clamp(parseFloat(radiusRange.value) || 0.5, 0.15, 1.5);
+    syncRadiusUI();
+    if (state.home) setZoneCircle(state.home, state.radiusMi * M_PER_MI);
+    setupStatus.textContent = 'Zone updated.';
+    setupStatus.className = '';
+  });
+  $$('.preset').forEach(b => b.addEventListener('click', () => {
+    state.radiusMi = clamp(parseFloat(b.dataset.radius) || 0.5, 0.15, 1.5);
+    radiusRange.value = state.radiusMi;
+    syncRadiusUI();
+    if (state.home) setZoneCircle(state.home, state.radiusMi * M_PER_MI);
+  }));
 
-            stopSiren() {
-                if (this.sirenOsc && this.isSirenPlaying) {
-                    try {
-                        this.sirenOsc.stop();
-                        this.sirenOsc.disconnect();
-                    } catch(e) {}
-                    this.isSirenPlaying = false;
-                }
-            }
+  $('#btn-draw-zone').addEventListener('click', beginDraw);
+  $('#btn-circle-zone').addEventListener('click', () => {
+    if (!state.home) { toast('Set a home base first', 'warn'); return; }
+    setZoneCircle(state.home, state.radiusMi * M_PER_MI);
+    syncRadiusUI();
+    toast('Circular zone restored', 'info');
+  });
+  $('#btn-draw-undo').addEventListener('click', undoDrawPoint);
+  $('#btn-draw-finish').addEventListener('click', finishDraw);
+  $('#btn-draw-cancel').addEventListener('click', cancelDraw);
+
+  $$('.pace').forEach(b => b.addEventListener('click', () => {
+    state.zombieMph = parseFloat(b.dataset.mph) || 5.5;
+    syncPaceUI();
+  }));
+
+  nameInput.addEventListener('input', () => { state.name = sanitizeName(nameInput.value); });
+  roomInput.addEventListener('input', () => {
+    state.room = sanitizeRoom(roomInput.value);
+    roomInputPanel.value = state.room;
+  });
+  roomInputPanel.addEventListener('input', () => {
+    state.room = sanitizeRoom(roomInputPanel.value);
+    roomInput.value = state.room;
+  });
+
+  btnStart.addEventListener('click', startGame);
+
+  $('#btn-audio').addEventListener('click', () => {
+    audio.init();
+    state.muted = !state.muted;
+    audio.setMuted(state.muted);
+    audioIcon.className = state.muted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
+    $('#btn-audio').classList.toggle('on', !state.muted);
+    savePrefs();
+  });
+  $('#btn-sim').addEventListener('click', () => {
+    audio.init();
+    setSimulation(!state.simulation);
+  });
+  $('#btn-recenter').addEventListener('click', () => recenterMap(16));
+
+  $('#btn-leaderboard').addEventListener('click', () => {
+    if (window.matchMedia('(max-width: 1100px)').matches) openSheet();
+    else {
+      renderScoreboard();
+      $('#panel-right').classList.add('open');
+      setTimeout(() => $('#panel-right').classList.remove('open'), 1800);
+    }
+  });
+  $('#sheet-close').addEventListener('click', closeSheet);
+  $('#sheet-scrim').addEventListener('click', closeSheet);
+
+  $$('.tab').forEach(t => t.addEventListener('click', () => {
+    state.activeTab = t.dataset.tab;
+    $$('.tab').forEach(x => x.classList.toggle('active', x === t));
+    renderScoreboard();
+  }));
+
+  $('#btn-join-room').addEventListener('click', () => {
+    audio.init();
+    state.room = sanitizeRoom(roomInputPanel.value);
+    state.name = sanitizeName(nameInput.value) || state.name || defaultName();
+    roomInput.value = state.room;
+    roomInputPanel.value = state.room;
+    savePrefs();
+    connectRoom();
+    if (state.gameActive) publishState();
+  });
+
+  $('#btn-again').addEventListener('click', () => {
+    gameOverModal.classList.remove('open');
+    resetRun(false);
+    startGame();
+  });
+  $('#btn-change-setup').addEventListener('click', () => {
+    resetRun(true);
+    toast('Adjust your base, zone or pace', 'info');
+  });
+  $('#btn-share').addEventListener('click', shareRun);
+  $('#btn-invite').addEventListener('click', copyInvite);
+  $('#btn-end-scores').addEventListener('click', () => {
+    renderScoreboard();
+    openSheet();
+  });
+
+  window.addEventListener('beforeunload', () => disconnectRoom(true));
+  initKeyboard();
+}
+
+function copyInvite() {
+  const code = sanitizeRoom(state.room);
+  if (!code) { toast('Join a room first to copy an invite', 'warn'); return; }
+  const name = sanitizeName(state.name) || 'Runner';
+  const url = `${location.origin}${location.pathname}?room=${encodeURIComponent(code)}&name=${encodeURIComponent(name)}`;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url)
+      .then(() => toast(`Invite copied · room ${code}`, 'good', 2600))
+      .catch(() => toast(url, 'info', 7000));
+  } else {
+    toast(url, 'info', 7000);
+  }
+}
+
+function shareRun() {
+  const text = `I scored ${Math.round(state.score).toLocaleString()} pts running ${fmtMiles(state.distanceM)} in Z-Run // Outbreak Protocol — wave ${state.wave}. Think you can outrun the horde?`;
+  const url = location.href.split('?')[0];
+  if (navigator.share) {
+    navigator.share({ title: 'Z-Run // Outbreak Protocol', text, url }).catch(() => {});
+    return;
+  }
+  const payload = `${text}\n${url}`;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(payload).then(() => toast('Result copied to clipboard', 'good')).catch(() => toast('Copy failed', 'warn'));
+  } else {
+    toast('Sharing not supported here', 'warn');
+  }
+}
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+function init() {
+  initMap();
+  bindUI();
+  loadPrefs();
+  initJoystick();
+  updateHUD();
+  updateStartState();
+  renderScoreboard();
+  setRoomStatus('solo');
+  if (new URLSearchParams(location.search).get('room')) connectRoom();
+
+  setInterval(loop, 200);
+  setInterval(() => { if (state.gameActive) spawnZombie(); }, 6500);
+  setInterval(pruneRemotes, 5000);
+
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(pos => {
+      setGpsChip(`GPS ±${Math.round(pos.coords.accuracy || 0)} m`, 'ok');
+      if (!state.home) {
+        map.setView([pos.coords.latitude, pos.coords.longitude], 16);
+        if ((pos.coords.accuracy || 999) <= 150) {
+          setHome(pos.coords.latitude, pos.coords.longitude, null);
         }
-
-        // --- GAME ENGINE STATE & VARS ---
-        const audio = new SoundEngine();
-        let map, drawControl;
-        let homePos = null; // {lat, lng}
-        let playerPos = null; // {lat, lng}
-        let playerMarker = null;
-        let boundaryLayer = null;
-        let boundaryGeoJSON = null;
-        
-        let simulationMode = false;
-        let watchId = null;
-
-        // Walkable street/park graph structure for Zombie navigation
-        let walkableGraphNodes = []; // [{id, lat, lng, neighbors: [nodeIndex]}]
-        let walkablePolygons = [];  // Array of L.LatLng arrays for parks/fields
-
-        // Configs & Stats
-        let zombieSpeedKmH = 9; // default jogger speed
-        let playerHp = 100;
-        let score = 0;
-        let suppliesCollected = 0;
-        let totalDistanceMeters = 0;
-        let lastPlayerPos = null;
-        let currentSpeedKmH = 0;
-        let gameActive = false;
-
-        // Entities arrays
-        let waypoints = []; // Array of Leaflet markers with meta
-        let zombies = [];   // Array of { marker, lat, lng, speed }
-
-        // Interval references
-        let gameLoopInterval = null;
-        let zombieSpawnInterval = null;
-        let joystickInterval = null;
-        let joystickVector = { x: 0, y: 0 };
-
-        // --- DOM ELEMENTS ---
-        const setupModal = document.getElementById('setup-modal');
-        const gameOverModal = document.getElementById('gameover-modal');
-        const btnGpsHome = document.getElementById('btn-gps-home');
-        const btnMapHome = document.getElementById('btn-map-home');
-        const btnDrawPoly = document.getElementById('btn-draw-poly');
-        const radiusRange = document.getElementById('radius-range');
-        const radiusValDisplay = document.getElementById('radius-val-display');
-        const homeStatus = document.getElementById('home-status');
-        const btnStartGame = document.getElementById('btn-start-game');
-        const simModeBtn = document.getElementById('sim-mode-btn');
-        const simModeText = document.getElementById('sim-mode-text');
-        const simControlsHint = document.getElementById('sim-controls-hint');
-        const audioToggleBtn = document.getElementById('audio-toggle-btn');
-        const audioIcon = document.getElementById('audio-icon');
-        const gpsErrorBanner = document.getElementById('gps-error-banner');
-        const gpsErrorTitle = document.getElementById('gps-error-title');
-        const gpsErrorDesc = document.getElementById('gps-error-desc');
-        const dismissGpsBtn = document.getElementById('dismiss-gps-btn');
-        const joystickContainer = document.getElementById('joystick-container');
-
-        // HUD DOM
-        const hudBottom = document.getElementById('hud-bottom');
-        const hpBar = document.getElementById('hp-bar');
-        const hpText = document.getElementById('hp-text');
-        const hudScore = document.getElementById('hud-score');
-        const hudWaypoints = document.getElementById('hud-waypoints');
-        const hudDistance = document.getElementById('hud-distance');
-        const hudSpeed = document.getElementById('hud-speed');
-        const hudZombies = document.getElementById('hud-zombies');
-        const radarAlert = document.getElementById('radar-alert');
-        const threatDistanceText = document.getElementById('threat-distance');
-        const dangerOverlay = document.getElementById('danger-overlay');
-
-        // --- INITIALIZATION ---
-        window.onload = function() {
-            initMap();
-            setupEventListeners();
-            initJoystick();
-        };
-
-        function initMap() {
-            // Default position (Center of London as placeholder until GPS fix)
-            const defaultLat = 51.505;
-            const defaultLng = -0.09;
-
-            map = L.map('map', {
-                zoomControl: false,
-                attributionControl: false
-            }).setView([defaultLat, defaultLng], 15);
-
-            // Add Dark tiles styling wrapper
-            L.DomUtil.addClass(map._container, 'dark-tiles');
-
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19
-            }).addTo(map);
-
-            // Try getting initial real position to center map
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(pos => {
-                    const coords = [pos.coords.latitude, pos.coords.longitude];
-                    map.setView(coords, 16);
-                    setHomeLocation(pos.coords.latitude, pos.coords.longitude, "GPS Location Set");
-                }, err => {
-                    handleGpsError(err);
-                }, { timeout: 8000 });
-            } else {
-                handleGpsError({ code: 0, message: "Geolocation API not supported on this browser." });
-            }
-        }
-
-        function handleGpsError(err) {
-            let msg = "Could not access location.";
-            if (err.code === 1) msg = "GPS Permission Denied. Using Manual Simulation Mode.";
-            else if (err.code === 2) msg = "GPS Position Unavailable. Switching to Manual Mode.";
-            else if (err.code === 3) msg = "GPS Signal Timed Out. Switching to Manual Mode.";
-            
-            gpsErrorTitle.innerText = "GPS Error / Fallback";
-            gpsErrorDesc.innerText = msg;
-            gpsErrorBanner.classList.remove('hidden');
-
-            // Force switch to manual mode
-            enableSimulationMode(true);
-        }
-
-        function enableSimulationMode(enable) {
-            simulationMode = enable;
-            if (simulationMode) {
-                simModeText.innerText = "Sim (Manual)";
-                simModeText.classList.replace('text-amber-400', 'text-cyan-400');
-                if (gameActive) {
-                    simControlsHint.classList.remove('hidden');
-                    joystickContainer.classList.remove('hidden');
-                }
-                if (watchId) navigator.geolocation.clearWatch(watchId);
-            } else {
-                simModeText.innerText = "GPS Mode";
-                simModeText.classList.replace('text-cyan-400', 'text-amber-400');
-                simControlsHint.classList.add('hidden');
-                joystickContainer.classList.add('hidden');
-                startGpsTracking();
-            }
-        }
-
-        function setupEventListeners() {
-            dismissGpsBtn.addEventListener('click', () => {
-                gpsErrorBanner.classList.add('hidden');
-            });
-
-            // Audio toggle button
-            audioToggleBtn.addEventListener('click', () => {
-                audio.init();
-                audio.muted = !audio.muted;
-                audioIcon.className = audio.muted ? 
-                    "fa-solid fa-volume-xmark text-slate-500" : 
-                    "fa-solid fa-volume-high text-emerald-400";
-            });
-
-            // Set Home via GPS button
-            btnGpsHome.addEventListener('click', () => {
-                if (navigator.geolocation) {
-                    btnGpsHome.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> Locating...`;
-                    navigator.geolocation.getCurrentPosition(pos => {
-                        btnGpsHome.innerHTML = `<i class="fa-solid fa-location-crosshairs"></i> Use Current GPS`;
-                        setHomeLocation(pos.coords.latitude, pos.coords.longitude, "GPS Home Set");
-                        map.setView([pos.coords.latitude, pos.coords.longitude], 16);
-                        gpsErrorBanner.classList.add('hidden');
-                    }, err => {
-                        btnGpsHome.innerHTML = `<i class="fa-solid fa-location-crosshairs"></i> Use Current GPS`;
-                        handleGpsError(err);
-                    }, { timeout: 7000 });
-                }
-            });
-
-            // Set Home via Map Click
-            let selectingHomeFromMap = false;
-            btnMapHome.addEventListener('click', () => {
-                selectingHomeFromMap = true;
-                homeStatus.innerText = "Click anywhere on the map!";
-                homeStatus.className = "text-amber-400 font-bold text-[10px] animate-pulse";
-            });
-
-            map.on('click', (e) => {
-                if (selectingHomeFromMap) {
-                    setHomeLocation(e.latlng.lat, e.latlng.lng, "Map Location Set");
-                    selectingHomeFromMap = false;
-                } else if (simulationMode && gameActive) {
-                    // In simulation mode, clicking moves player directly
-                    updatePlayerPosition(e.latlng.lat, e.latlng.lng);
-                }
-            });
-
-            // Radius Slider Change
-            radiusRange.addEventListener('input', (e) => {
-                const val = e.target.value;
-                radiusValDisplay.innerText = `Radius: ${val}m`;
-                if (homePos) {
-                    renderRadiusBoundary(val);
-                }
-            });
-
-            // Custom Draw Boundary
-            btnDrawPoly.addEventListener('click', () => {
-                setupModal.classList.add('hidden');
-                enablePolygonDrawing();
-            });
-
-            // Speed Selector Buttons
-            document.querySelectorAll('.speed-select-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    document.querySelectorAll('.speed-select-btn').forEach(b => {
-                        b.classList.remove('ring-2', 'ring-red-500', 'bg-red-950/50', 'text-red-400');
-                        b.classList.add('bg-slate-800', 'text-slate-300');
-                    });
-                    const target = e.currentTarget;
-                    target.classList.remove('bg-slate-800', 'text-slate-300');
-                    target.classList.add('ring-2', 'ring-red-500', 'bg-red-950/50', 'text-red-400');
-                    zombieSpeedKmH = parseFloat(target.getAttribute('data-speed'));
-                });
-            });
-
-            // Start Game
-            btnStartGame.addEventListener('click', () => {
-                audio.init();
-                startGame();
-            });
-
-            // Simulation mode toggle
-            simModeBtn.addEventListener('click', () => {
-                enableSimulationMode(!simulationMode);
-            });
-
-            // Keyboard navigation for Simulation mode
-            window.addEventListener('keydown', (e) => {
-                if (!simulationMode || !gameActive || !playerPos) return;
-                const step = 0.00015; // aprox 12-15 meters per key press
-                let lat = playerPos.lat;
-                let lng = playerPos.lng;
-
-                switch (e.key.toLowerCase()) {
-                    case 'w': case 'arrowup': lat += step; break;
-                    case 's': case 'arrowdown': lat -= step; break;
-                    case 'a': case 'arrowleft': lng -= step; break;
-                    case 'd': case 'arrowright': lng += step; break;
-                    default: return;
-                }
-                updatePlayerPosition(lat, lng);
-            });
-
-            // Restart Button
-            document.getElementById('btn-restart').addEventListener('click', () => {
-                location.reload();
-            });
-        }
-
-        // --- VIRTUAL JOYSTICK FOR MOBILE / INDOOR MANUAL CONTROLS ---
-        function initJoystick() {
-            const base = document.getElementById('joystick-base');
-            const stick = document.getElementById('joystick-stick');
-            let active = false;
-            let center = { x: 0, y: 0 };
-
-            const onStart = (e) => {
-                active = true;
-                const rect = base.getBoundingClientRect();
-                center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-                onMove(e);
-            };
-
-            const onMove = (e) => {
-                if (!active) return;
-                const touch = e.touches ? e.touches[0] : e;
-                const dx = touch.clientX - center.x;
-                const dy = touch.clientY - center.y;
-                const dist = Math.min(Math.hypot(dx, dy), 40);
-                const angle = Math.atan2(dy, dx);
-
-                const stickX = Math.cos(angle) * dist;
-                const stickY = Math.sin(angle) * dist;
-
-                stick.style.transform = `translate(${stickX}px, ${stickY}px)`;
-                
-                // Set movement vector normalized (-1 to 1)
-                joystickVector.x = stickX / 40;
-                joystickVector.y = stickY / 40;
-            };
-
-            const onEnd = () => {
-                active = false;
-                stick.style.transform = `translate(0px, 0px)`;
-                joystickVector = { x: 0, y: 0 };
-            };
-
-            base.addEventListener('touchstart', onStart);
-            window.addEventListener('touchmove', onMove);
-            window.addEventListener('touchend', onEnd);
-            base.addEventListener('mousedown', onStart);
-            window.addEventListener('mousemove', onMove);
-            window.addEventListener('mouseup', onEnd);
-
-            // Continuously apply joystick movement
-            setInterval(() => {
-                if (!gameActive || !simulationMode || (joystickVector.x === 0 && joystickVector.y === 0)) return;
-                const speedStep = 0.00012; // ~12m
-                const newLat = playerPos.lat - (joystickVector.y * speedStep);
-                const newLng = playerPos.lng + (joystickVector.x * speedStep);
-                updatePlayerPosition(newLat, newLng);
-            }, 100);
-        }
-
-        // --- SET LOCATION & BOUNDARY LOGIC ---
-
-        function setHomeLocation(lat, lng, statusText) {
-            homePos = { lat, lng };
-            playerPos = { lat, lng };
-            homeStatus.innerText = statusText;
-            homeStatus.className = "text-emerald-400 text-[10px] font-mono";
-
-            // Render/Update Default Radius Boundary
-            renderRadiusBoundary(radiusRange.value);
-
-            // Enable Start Button
-            btnStartGame.disabled = false;
-        }
-
-        function renderRadiusBoundary(radiusMeters) {
-            if (!homePos) return;
-            if (boundaryLayer) map.removeLayer(boundaryLayer);
-
-            boundaryLayer = L.circle([homePos.lat, homePos.lng], {
-                radius: parseInt(radiusMeters),
-                color: '#06b6d4',
-                weight: 2,
-                fillColor: '#0891b2',
-                fillOpacity: 0.15,
-                dashArray: '6, 6'
-            }).addTo(map);
-
-            boundaryGeoJSON = boundaryLayer.toGeoJSON();
-        }
-
-        function enablePolygonDrawing() {
-            // Add notification bar
-            const drawNotice = document.createElement('div');
-            drawNotice.id = 'draw-notice';
-            drawNotice.className = "absolute top-4 left-1/2 -translate-x-1/2 z-30 bg-cyan-950 border border-cyan-500 text-cyan-200 px-4 py-2 rounded-xl text-xs font-bold shadow-xl flex items-center space-x-3";
-            drawNotice.innerHTML = `
-                <span>Click points on map to draw custom boundary polygon.</span>
-                <button id="finish-draw-btn" class="bg-cyan-600 hover:bg-cyan-500 text-white px-2.5 py-1 rounded-lg">Done</button>
-            `;
-            document.body.appendChild(drawNotice);
-
-            // Leaflet Draw feature group
-            const drawnItems = new L.FeatureGroup();
-            map.addLayer(drawnItems);
-
-            const polygonDrawer = new L.Draw.Polygon(map, {
-                shapeOptions: {
-                    color: '#06b6d4',
-                    fillColor: '#0891b2',
-                    fillOpacity: 0.2
-                }
-            });
-            polygonDrawer.enable();
-
-            map.on(L.Draw.Event.CREATED, function (e) {
-                const layer = e.layer;
-                if (boundaryLayer) map.removeLayer(boundaryLayer);
-                boundaryLayer = layer;
-                map.addLayer(boundaryLayer);
-                boundaryGeoJSON = boundaryLayer.toGeoJSON();
-
-                // Set home pos to polygon centroid if not set
-                const bounds = layer.getBounds();
-                const center = bounds.getCenter();
-                setHomeLocation(center.lat, center.lng, "Polygon Area Set");
-
-                document.getElementById('draw-notice')?.remove();
-                setupModal.classList.remove('hidden');
-            });
-
-            document.getElementById('finish-draw-btn')?.addEventListener('click', () => {
-                polygonDrawer.completeShape();
-            });
-        }
-
-        // --- GAME START & ENGINE LOOP ---
-
-        function startGame() {
-            setupModal.classList.add('hidden');
-            hudBottom.classList.remove('hidden');
-            hudBottom.classList.add('flex');
-            gameActive = true;
-
-            // Render Player Marker
-            createPlayerMarker(playerPos.lat, playerPos.lng);
-
-            // Fetch Walkable Graph (Streets & Parks) & Supply Waypoints
-            fetchWalkableStreetAndParkGraph();
-
-            // Start Geolocation or Simulation
-            if (!simulationMode) {
-                startGpsTracking();
-            } else {
-                simControlsHint.classList.remove('hidden');
-                joystickContainer.classList.remove('hidden');
-            }
-
-            // Start Zombie Spawns
-            zombieSpawnInterval = setInterval(spawnZombie, 12000); // New zombie every 12s
-            spawnZombie(); // Initial zombie
-
-            // Main Game Loop (1 FPS tick for updates)
-            gameLoopInterval = setInterval(gameLoopTick, 1000);
-        }
-
-        function createPlayerMarker(lat, lng) {
-            const playerIcon = L.divIcon({
-                className: 'player-pulse-marker',
-                html: `
-                    <div class="pulse-ring"></div>
-                    <div class="w-7 h-7 bg-emerald-500 border-2 border-white rounded-full flex items-center justify-center shadow-lg">
-                        <i class="fa-solid fa-person-running text-slate-950 text-sm"></i>
-                    </div>
-                `,
-                iconSize: [36, 36],
-                iconAnchor: [18, 18]
-            });
-
-            playerMarker = L.marker([lat, lng], { icon: playerIcon }).addTo(map);
-        }
-
-        function startGpsTracking() {
-            if (navigator.geolocation) {
-                watchId = navigator.geolocation.watchPosition(
-                    (pos) => {
-                        updatePlayerPosition(pos.coords.latitude, pos.coords.longitude, pos.coords.speed);
-                    },
-                    (err) => handleGpsError(err),
-                    { enableHighAccuracy: true, maximumAge: 1000, timeout: 10000 }
-                );
-            } else {
-                handleGpsError({ code: 0, message: "Geolocation not supported." });
-            }
-        }
-
-        function updatePlayerPosition(lat, lng, speedMs = null) {
-            if (!gameActive) return;
-
-            const newPos = { lat, lng };
-
-            if (lastPlayerPos) {
-                const distMoved = getDistanceMeters(lastPlayerPos.lat, lastPlayerPos.lng, lat, lng);
-                totalDistanceMeters += distMoved;
-
-                // Calculate speed if not directly provided by GPS
-                if (speedMs !== null && speedMs !== undefined && !isNaN(speedMs)) {
-                    currentSpeedKmH = (speedMs * 3.6);
-                } else {
-                    currentSpeedKmH = (distMoved * 3.6); // 1-sec tick approximation
-                }
-            }
-
-            playerPos = newPos;
-            lastPlayerPos = newPos;
-
-            if (playerMarker) {
-                playerMarker.setLatLng([lat, lng]);
-            }
-            map.panTo([lat, lng]);
-
-            // Check supply collections
-            checkWaypointCollisions();
-            updateHUD();
-        }
-
-        // --- OVERPASS API: STREETS, SIDEWALKS & PARKS WALKABLE GRAPH ---
-
-        async function fetchWalkableStreetAndParkGraph() {
-            hudWaypoints.innerText = "Building Street Graph...";
-            
-            // Bounding box from boundary layer
-            const bounds = boundaryLayer.getBounds();
-            const s = bounds.getSouth(), w = bounds.getWest(), n = bounds.getNorth(), e = bounds.getEast();
-
-            // Query streets, footways, paths, parks, pitches, gardens, meadows
-            const query = `
-                [out:json][timeout:15];
-                (
-                  way["highway"](${s},${w},${n},${e});
-                  way["leisure"~"park|pitch|garden|playground"](${s},${w},${n},${e});
-                  way["landuse"~"grass|meadow|recreation_ground"](${s},${w},${n},${e});
-                );
-                out body;
-                >;
-                out skel qt;
-            `;
-            const url = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`;
-
-            try {
-                const res = await fetch(url);
-                const data = await res.json();
-                
-                if (data.elements && data.elements.length > 0) {
-                    buildSpatialGraphFromOSM(data.elements);
-                } else {
-                    buildFallbackGraph();
-                }
-            } catch (err) {
-                console.warn("Overpass API graph build failed. Using fallback street grid.");
-                buildFallbackGraph();
-            }
-
-            // Scatter waypoints on graph nodes
-            populateSupplyWaypointsFromGraph();
-        }
-
-        function buildSpatialGraphFromOSM(elements) {
-            const nodeMap = new Map();
-            walkableGraphNodes = [];
-            walkablePolygons = [];
-
-            // 1. Collect nodes
-            elements.forEach(el => {
-                if (el.type === 'node') {
-                    nodeMap.set(el.id, { id: el.id, lat: el.lat, lng: el.lon, neighbors: new Set() });
-                }
-            });
-
-            // 2. Connect edges along ways (streets, paths, parks)
-            elements.forEach(el => {
-                if (el.type === 'way' && el.nodes && el.nodes.length > 1) {
-                    for (let i = 0; i < el.nodes.length - 1; i++) {
-                        const n1 = nodeMap.get(el.nodes[i]);
-                        const n2 = nodeMap.get(el.nodes[i + 1]);
-                        if (n1 && n2) {
-                            n1.neighbors.add(n2);
-                            n2.neighbors.add(n1);
-                        }
-                    }
-
-                    // Store park/green space polygons if applicable
-                    if (el.tags && (el.tags.leisure || el.tags.landuse)) {
-                        const polyCoords = el.nodes.map(nid => nodeMap.get(nid)).filter(Boolean);
-                        if (polyCoords.length > 2) {
-                            walkablePolygons.push(polyCoords);
-                        }
-                    }
-                }
-            });
-
-            // Convert neighbors to array
-            nodeMap.forEach(n => {
-                n.neighbors = Array.from(n.neighbors);
-                walkableGraphNodes.push(n);
-            });
-
-            if (walkableGraphNodes.length === 0) {
-                buildFallbackGraph();
-            }
-        }
-
-        function buildFallbackGraph() {
-            // Create a synthetic 5x5 street grid near home
-            walkableGraphNodes = [];
-            const centerLat = homePos.lat;
-            const centerLng = homePos.lng;
-            const gridScale = 0.0015;
-
-            for (let i = -2; i <= 2; i++) {
-                for (let j = -2; j <= 2; j++) {
-                    walkableGraphNodes.push({
-                        id: `grid_${i}_${j}`,
-                        lat: centerLat + (i * gridScale),
-                        lng: centerLng + (j * gridScale),
-                        neighbors: []
-                    });
-                }
-            }
-
-            // Link grid neighbors
-            walkableGraphNodes.forEach((node, idx) => {
-                walkableGraphNodes.forEach((other, oIdx) => {
-                    if (idx !== oIdx) {
-                        const d = getDistanceMeters(node.lat, node.lng, other.lat, other.lng);
-                        if (d < 200) node.neighbors.push(other);
-                    }
-                });
-            });
-        }
-
-        function populateSupplyWaypointsFromGraph() {
-            waypoints = [];
-            const sampleNodes = [...walkableGraphNodes].sort(() => 0.5 - Math.random()).slice(0, 8);
-
-            sampleNodes.forEach(node => {
-                createSupplyWaypoint(node.lat, node.lng);
-            });
-
-            hudWaypoints.innerText = `0/${waypoints.length}`;
-        }
-
-        function createSupplyWaypoint(lat, lng) {
-            const types = [
-                { name: 'Medkit', icon: 'fa-kit-medical', color: 'text-red-400', bg: 'bg-red-950', pts: 150, hp: 25 },
-                { name: 'Rations', icon: 'fa-box-tissue', color: 'text-amber-400', bg: 'bg-amber-950', pts: 100, hp: 10 },
-                { name: 'Ammo Pack', icon: 'fa-shield-halved', color: 'text-cyan-400', bg: 'bg-cyan-950', pts: 200, hp: 0 }
-            ];
-            const type = types[Math.floor(Math.random() * types.length)];
-
-            const icon = L.divIcon({
-                className: 'supply-marker',
-                html: `
-                    <div class="w-8 h-8 ${type.bg} border border-slate-600 rounded-lg flex items-center justify-center shadow-lg transition transform hover:scale-110">
-                        <i class="fa-solid ${type.icon} ${type.color} text-sm"></i>
-                    </div>
-                `,
-                iconSize: [32, 32],
-                iconAnchor: [16, 16]
-            });
-
-            const marker = L.marker([lat, lng], { icon }).addTo(map);
-            waypoints.push({ marker, lat, lng, type, collected: false });
-        }
-
-        function checkWaypointCollisions() {
-            waypoints.forEach(wp => {
-                if (wp.collected) return;
-                const dist = getDistanceMeters(playerPos.lat, playerPos.lng, wp.lat, wp.lng);
-                
-                // Pickup radius <= 20 meters
-                if (dist <= 20) {
-                    wp.collected = true;
-                    map.removeLayer(wp.marker);
-
-                    score += wp.type.pts;
-                    suppliesCollected++;
-                    playerHp = Math.min(100, playerHp + wp.type.hp);
-
-                    audio.playCollect();
-
-                    // Show temporary floating text notification
-                    showFloatingNotification(`+${wp.type.pts} PTS (${wp.type.name})`, '#10b981');
-                }
-            });
-        }
-
-        // --- MAP-CONSTRAINED ZOMBIE PATHFINDING LOGIC ---
-
-        function getClosestGraphNode(lat, lng) {
-            let closest = null;
-            let minDist = Infinity;
-
-            for (let i = 0; i < walkableGraphNodes.length; i++) {
-                const n = walkableGraphNodes[i];
-                const d = getDistanceMeters(lat, lng, n.lat, n.lng);
-                if (d < minDist) {
-                    minDist = d;
-                    closest = n;
-                }
-            }
-            return closest;
-        }
-
-        function isPointInWalkablePolygon(lat, lng) {
-            // Check if point resides inside any green space/park polygon
-            for (let p = 0; p < walkablePolygons.length; p++) {
-                const poly = walkablePolygons[p];
-                let inside = false;
-                for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-                    const xi = poly[i].lat, yi = poly[i].lng;
-                    const xj = poly[j].lat, yj = poly[j].lng;
-                    const intersect = ((yi > lng) !== (yj > lng)) &&
-                        (lat < (xj - xi) * (lng - yi) / (yj - yi) + xi);
-                    if (intersect) inside = !inside;
-                }
-                if (inside) return true;
-            }
-            return false;
-        }
-
-        function spawnZombie() {
-            if (!gameActive || zombies.length >= 8 || walkableGraphNodes.length === 0) return;
-
-            // Pick a graph node 100m-250m away from player
-            const validNodes = walkableGraphNodes.filter(n => {
-                const d = getDistanceMeters(playerPos.lat, playerPos.lng, n.lat, n.lng);
-                return d >= 80 && d <= 300;
-            });
-
-            const spawnNode = validNodes.length > 0 ? 
-                validNodes[Math.floor(Math.random() * validNodes.length)] : 
-                walkableGraphNodes[Math.floor(Math.random() * walkableGraphNodes.length)];
-
-            const zombieIcon = L.divIcon({
-                className: 'zombie-marker',
-                html: `
-                    <div class="zombie-pulse-ring"></div>
-                    <div class="w-8 h-8 bg-red-950 border-2 border-red-600 rounded-full flex items-center justify-center shadow-xl">
-                        <i class="fa-solid fa-biohazard text-red-500 text-sm animate-pulse"></i>
-                    </div>
-                `,
-                iconSize: [32, 32],
-                iconAnchor: [16, 16]
-            });
-
-            const marker = L.marker([spawnNode.lat, spawnNode.lng], { icon: zombieIcon }).addTo(map);
-            zombies.push({ 
-                marker, 
-                lat: spawnNode.lat, 
-                lng: spawnNode.lng,
-                currentNode: spawnNode
-            });
-        }
-
-        function moveZombies() {
-            let minDistance = Infinity;
-            const speedMps = (zombieSpeedKmH * 1000) / 3600;
-
-            const playerNearestNode = getClosestGraphNode(playerPos.lat, playerPos.lng);
-
-            zombies.forEach(z => {
-                const distToPlayer = getDistanceMeters(z.lat, z.lng, playerPos.lat, playerPos.lng);
-                if (distToPlayer < minDistance) minDistance = distToPlayer;
-
-                // 1. If zombie is inside a park polygon or very close to player (< 25m), pursue player directly over open field
-                if (distToPlayer <= 25 || isPointInWalkablePolygon(z.lat, z.lng)) {
-                    stepDirectlyTowards(z, playerPos.lat, playerPos.lng, speedMps);
-                } else {
-                    // 2. Otherwise, navigate street graph nodes towards player's nearest node
-                    const zNode = z.currentNode || getClosestGraphNode(z.lat, z.lng);
-                    
-                    if (zNode && zNode.neighbors && zNode.neighbors.length > 0) {
-                        // Find neighbor node that minimizes distance to player
-                        let bestNeighbor = zNode;
-                        let bestDist = getDistanceMeters(zNode.lat, zNode.lng, playerPos.lat, playerPos.lng);
-
-                        zNode.neighbors.forEach(nb => {
-                            const d = getDistanceMeters(nb.lat, nb.lng, playerPos.lat, playerPos.lng);
-                            if (d < bestDist) {
-                                bestDist = d;
-                                bestNeighbor = nb;
-                            }
-                        });
-
-                        // Step towards best neighbor node
-                        const distToNode = getDistanceMeters(z.lat, z.lng, bestNeighbor.lat, bestNeighbor.lng);
-                        if (distToNode < 3) {
-                            z.currentNode = bestNeighbor; // Arrived at node
-                        }
-                        stepDirectlyTowards(z, bestNeighbor.lat, bestNeighbor.lng, speedMps);
-                    } else {
-                        // Fallback step
-                        stepDirectlyTowards(z, playerPos.lat, playerPos.lng, speedMps);
-                    }
-                }
-
-                z.marker.setLatLng([z.lat, z.lng]);
-
-                // Zombie Attack Radius <= 6 meters
-                if (distToPlayer <= 6) {
-                    playerHp = Math.max(0, playerHp - 8);
-                    audio.playDamage();
-                    showFloatingNotification("-8 HP OVERRUN!", '#ef4444');
-                }
-            });
-
-            return minDistance;
-        }
-
-        function stepDirectlyTowards(z, targetLat, targetLng, speedMps) {
-            const dLat = targetLat - z.lat;
-            const dLng = targetLng - z.lng;
-            const angle = Math.atan2(dLat, dLng);
-
-            const moveStepLat = (Math.sin(angle) * speedMps) / 111000;
-            const moveStepLng = (Math.cos(angle) * speedMps) / (111000 * Math.cos(z.lat * Math.PI / 180));
-
-            z.lat += moveStepLat;
-            z.lng += moveStepLng;
-        }
-
-        // --- MAIN GAME LOOP TICK ---
-
-        function gameLoopTick() {
-            if (!gameActive) return;
-
-            const nearestZombieDist = moveZombies();
-
-            // Threat Audio & Screen Alerts
-            if (nearestZombieDist <= 40) {
-                radarAlert.classList.remove('hidden');
-                radarAlert.classList.add('flex');
-                threatDistanceText.innerText = `NEAREST: ${Math.round(nearestZombieDist)}m`;
-                dangerOverlay.classList.add('danger-flash');
-                audio.startSiren();
-            } else {
-                radarAlert.classList.add('hidden');
-                dangerOverlay.classList.remove('danger-flash');
-                audio.stopSiren();
-            }
-
-            // Check Game Over Condition
-            if (playerHp <= 0) {
-                triggerGameOver(false);
-            }
-
-            // Check Victory Condition (All waypoints collected)
-            const remaining = waypoints.filter(w => !w.collected).length;
-            if (waypoints.length > 0 && remaining === 0) {
-                triggerGameOver(true);
-            }
-
-            updateHUD();
-        }
-
-        function updateHUD() {
-            hpBar.style.width = `${playerHp}%`;
-            hpText.innerText = `${playerHp} HP`;
-            hudScore.innerText = score;
-            
-            const remaining = waypoints.filter(w => !w.collected).length;
-            hudWaypoints.innerText = `${waypoints.length - remaining}/${waypoints.length}`;
-            hudDistance.innerText = `${(totalDistanceMeters / 1000).toFixed(2)} km`;
-            hudSpeed.innerText = `${currentSpeedKmH.toFixed(1)} km/h`;
-            hudZombies.innerText = zombies.length;
-        }
-
-        function triggerGameOver(isVictory) {
-            gameActive = false;
-            clearInterval(gameLoopInterval);
-            clearInterval(zombieSpawnInterval);
-            audio.stopSiren();
-
-            const endTitle = document.getElementById('end-title');
-            const endSub = document.getElementById('end-subtitle');
-            const endIcon = document.getElementById('end-icon');
-            const endIconContainer = document.getElementById('end-icon-container');
-
-            if (isVictory) {
-                endTitle.innerText = "ZONE CLEARED!";
-                endTitle.className = "text-2xl font-black text-emerald-400 uppercase tracking-wide";
-                endSub.innerText = "You retrieved all supply crates and survived the outbreak!";
-                endIcon.className = "fa-solid fa-trophy text-5xl text-emerald-400";
-                endIconContainer.className = "inline-flex p-4 bg-emerald-950/60 rounded-full border border-emerald-800";
-            } else {
-                endTitle.innerText = "YOU WERE OVERRUN";
-                endTitle.className = "text-2xl font-black text-red-500 uppercase tracking-wide";
-                endSub.innerText = "The horde overwhelmed your defenses in the field.";
-                endIcon.className = "fa-solid fa-skull text-5xl text-red-500";
-                endIconContainer.className = "inline-flex p-4 bg-red-950/60 rounded-full border border-red-800";
-            }
-
-            document.getElementById('end-score').innerText = score;
-            document.getElementById('end-supplies').innerText = suppliesCollected;
-            document.getElementById('end-dist').innerText = `${(totalDistanceMeters / 1000).toFixed(2)} km`;
-
-            gameOverModal.classList.remove('hidden');
-        }
-
-        // --- HELPER UTILITIES ---
-
-        // Distance formula using Haversine
-        function getDistanceMeters(lat1, lon1, lat2, lon2) {
-            const R = 6371e3; // Earth radius in meters
-            const φ1 = lat1 * Math.PI / 180;
-            const φ2 = lat2 * Math.PI / 180;
-            const Δφ = (lat2 - lat1) * Math.PI / 180;
-            const Δλ = (lon2 - lon1) * Math.PI / 180;
-
-            const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-                      Math.cos(φ1) * Math.cos(φ2) *
-                      Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-            return R * c;
-        }
-
-        function showFloatingNotification(text, color) {
-            const toast = document.createElement('div');
-            toast.className = `fixed top-16 left-1/2 -translate-x-1/2 z-50 font-black text-sm px-4 py-1.5 rounded-full shadow-2xl backdrop-blur-md border border-slate-700 animate-bounce`;
-            toast.style.color = color;
-            toast.style.backgroundColor = 'rgba(15, 23, 42, 0.9)';
-            toast.innerText = text;
-            document.body.appendChild(toast);
-
-            setTimeout(() => toast.remove(), 2000);
-        }
-    </script>
+      }
+    }, () => {
+      setGpsChip('GPS unavailable', 'warn');
+    }, { enableHighAccuracy: true, timeout: 9000, maximumAge: 30000 });
+  } else {
+    setGpsChip('GPS unsupported', 'warn');
+  }
+}
+
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+else init();
+
+</script>
 </body>
 </html>
