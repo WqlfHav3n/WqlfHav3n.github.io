@@ -105,6 +105,9 @@ button{cursor:pointer;border:none;background:none}
 .hp-num{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--muted);min-width:24px;text-align:right}
 .score-chip i{color:var(--amber)}
 .score-chip .score{font-family:var(--mono);font-weight:700;color:var(--amber);font-size:13px}
+.mission-chip{color:var(--cyan);border-color:rgba(79,227,255,.25);font-family:var(--mono);font-size:10px;letter-spacing:.05em}
+.mission-chip i{font-size:11px}
+.mission-chip-text{max-width:126px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .room-chip{cursor:default}
 .room-chip .dot{width:6px;height:6px;border-radius:50%;background:var(--dim)}
 .room-chip.live .dot{background:var(--green);box-shadow:0 0 8px var(--green);animation:dotPulse 1.6s infinite}
@@ -126,6 +129,9 @@ button{cursor:pointer;border:none;background:none}
 .obj-icon.green{color:var(--green);background:rgba(109,255,168,.08);border-color:rgba(109,255,168,.18)}
 .obj-icon.red{color:var(--red);background:rgba(255,77,94,.08);border-color:rgba(255,77,94,.2)}
 .obj-icon.cyan{color:var(--cyan);background:rgba(79,227,255,.08);border-color:rgba(79,227,255,.18)}
+.obj-icon.amber{color:var(--amber);background:rgba(255,182,72,.08);border-color:rgba(255,182,72,.2)}
+.obj-icon.violet{color:var(--violet);background:rgba(177,140,255,.08);border-color:rgba(177,140,255,.2)}
+.mission-hint{font-size:9px;line-height:1.4;color:var(--dim);margin-top:5px}
 .obj-main{flex:1;min-width:0}
 .obj-label{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
 .obj-value{font-family:var(--mono);font-size:14px;font-weight:700;margin-top:1px}
@@ -149,6 +155,11 @@ button{cursor:pointer;border:none;background:none}
 .legend .l-zombie{color:var(--red)}
 .legend .l-supply{color:var(--cyan)}
 .legend .l-remote{color:var(--violet)}
+.guide-sub{margin:11px 0 6px;font-size:8px;letter-spacing:.15em;text-transform:uppercase;color:var(--dim)}
+.zguide{grid-template-columns:1fr;gap:4px 10px}
+.zguide span{font-size:9.5px}
+.zguide .zg-name{font-weight:600;color:var(--muted)}
+.zguide .zg-vision{font-family:var(--mono);font-size:8.5px;color:var(--dim);margin-left:auto}
 
 /* scoreboard */
 .tabs{display:flex;gap:2px;padding:2px;border-radius:8px;background:rgba(255,255,255,.05);border:1px solid var(--line)}
@@ -263,6 +274,21 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 .pace.active{border-color:rgba(255,77,94,.55);background:rgba(255,77,94,.09);box-shadow:inset 0 0 18px rgba(255,77,94,.08)}
 .pace.active i,.pace.active .nm{color:var(--red)}
 .pace.active .sp{color:#ffa3ab}
+.diff-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.mission-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.diff,.mission{display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px;border-radius:9px;border:1px solid var(--line);background:rgba(255,255,255,.03);transition:.15s;text-align:center;min-width:0}
+.diff i,.mission i{font-size:13px;color:var(--dim);transition:.15s}
+.diff .nm,.mission .nm{font-size:10.5px;font-weight:600;letter-spacing:.03em;line-height:1.15}
+.diff .sp,.mission .sp{font-family:var(--mono);font-size:8px;color:var(--dim);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.diff:hover,.mission:hover{border-color:var(--line-2);background:rgba(255,255,255,.06)}
+.diff.active{border-color:var(--dc,var(--cyan));background:color-mix(in srgb,var(--dc,var(--cyan)) 10%,transparent);box-shadow:inset 0 0 18px color-mix(in srgb,var(--dc,var(--cyan)) 8%,transparent)}
+.diff.active i,.diff.active .nm{color:var(--dc,var(--cyan))}
+.diff.active .sp{color:color-mix(in srgb,var(--dc,var(--cyan)) 70%,#fff)}
+.mission.active{border-color:rgba(79,227,255,.55);background:rgba(79,227,255,.09);box-shadow:inset 0 0 18px rgba(79,227,255,.08)}
+.mission.active i,.mission.active .nm{color:var(--cyan)}
+.mission.active .sp{color:#9befff}
+.setup-note{margin:9px 0 0;font-size:9px;line-height:1.45;color:var(--dim)}
+.setup-note b{color:var(--muted);font-weight:600}
 .setup-foot{display:flex;align-items:center;gap:12px;padding:0 20px 20px}
 #setup-status{flex:1;font-size:10px;line-height:1.4;color:var(--dim);min-width:0}
 #setup-status.ok{color:var(--green)}
@@ -276,6 +302,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 .end-card h2{margin:0;font-size:22px;letter-spacing:.16em;text-transform:uppercase;color:var(--red)}
 .end-card h2.win{color:var(--green)}
 .end-sub{margin:6px 0 0;font-size:11px;color:var(--muted);line-height:1.5}
+.end-card h2.win{color:var(--green)}
 .new-best{display:inline-flex;align-items:center;gap:5px;margin-top:10px;padding:4px 10px;border-radius:99px;background:rgba(255,182,72,.1);border:1px solid rgba(255,182,72,.35);color:var(--amber);font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;animation:bestGlow 1.4s infinite alternate}
 @keyframes bestGlow{from{box-shadow:0 0 0 rgba(255,182,72,0)}to{box-shadow:0 0 18px rgba(255,182,72,.3)}}
 .end-stats{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:16px 0;text-align:left}
@@ -314,9 +341,15 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 .player-pulse{position:absolute;width:34px;height:34px;border-radius:50%;border:2px solid rgba(109,255,168,.7);animation:playerPulse 2s infinite ease-out}
 @keyframes playerPulse{0%{transform:scale(1);opacity:.8}100%{transform:scale(2.8);opacity:0}}
 .home-marker{display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:8px;background:rgba(8,14,20,.9);border:1px solid rgba(79,227,255,.5);color:var(--cyan);font-size:11px;box-shadow:0 0 14px rgba(79,227,255,.25)}
-.zombie-marker{display:flex;align-items:center;justify-content:center;position:relative}
-.zombie-core{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 35% 30%,#5a1018,#2a0509 70%);border:2px solid #ff4d5e;color:#ff6b78;font-size:12px;box-shadow:0 0 18px rgba(255,45,63,.45),inset 0 0 10px rgba(255,45,63,.2);position:relative;z-index:2}
-.zombie-ring{position:absolute;width:30px;height:30px;border-radius:50%;border:1.5px solid rgba(255,77,94,.8);animation:zombiePulse 1.3s infinite ease-out}
+.extract-marker{display:flex;align-items:center;justify-content:center;position:relative;width:42px;height:42px}
+.extract-core{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 32% 28%,#d9fff0,#6dffa8 50%,#12a35a);border:2px solid rgba(255,255,255,.92);color:#03150b;font-size:14px;box-shadow:0 0 0 4px rgba(109,255,168,.16),0 0 28px rgba(109,255,168,.6);position:relative;z-index:2}
+.extract-pulse{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(109,255,168,.75);animation:playerPulse 1.6s infinite ease-out}
+.zombie-marker{--zc:#ff4d5e;--zs:30px;display:flex;align-items:center;justify-content:center;position:relative}
+.zombie-core{width:var(--zs);height:var(--zs);border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--zc) 38%,#1a0306),#160307 72%);border:2px solid var(--zc);color:var(--zc);font-size:calc(var(--zs) * .4);box-shadow:0 0 18px color-mix(in srgb,var(--zc) 45%,transparent),inset 0 0 10px color-mix(in srgb,var(--zc) 20%,transparent);position:relative;z-index:2}
+.zombie-ring{position:absolute;width:var(--zs);height:var(--zs);border-radius:50%;border:1.5px solid color-mix(in srgb,var(--zc) 80%,transparent);animation:zombiePulse 1.3s infinite ease-out}
+.zombie-marker.alert .zombie-core{box-shadow:0 0 28px var(--zc),inset 0 0 12px color-mix(in srgb,var(--zc) 35%,transparent);animation:zombieAlert .5s infinite alternate}
+.zombie-marker.alert .zombie-ring{animation-duration:.75s;border-width:2px}
+@keyframes zombieAlert{from{filter:brightness(.88)}to{filter:brightness(1.5)}}
 @keyframes zombiePulse{0%{transform:scale(1);opacity:.9}100%{transform:scale(2.4);opacity:0}}
 .supply-marker{display:flex;align-items:center;justify-content:center}
 .supply-core{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:rgba(8,16,22,.95);border:1px solid var(--c,#4fe3ff);color:var(--c,#4fe3ff);font-size:12px;box-shadow:0 0 16px color-mix(in srgb,var(--c,#4fe3ff) 40%,transparent);animation:supplyFloat 2.4s ease-in-out infinite}
@@ -370,6 +403,8 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
   .leaflet-bottom.leaflet-left{margin-bottom:190px}
   .setup-grid{grid-template-columns:1fr;padding:0 12px 12px}
   .step.wide{grid-column:auto}
+  .diff-grid{grid-template-columns:repeat(2,1fr)}
+  .mission-grid{grid-template-columns:repeat(3,1fr)}
   .setup-head{padding:20px 16px 14px}
   .setup-foot{flex-direction:column;align-items:stretch;padding:0 12px 14px;gap:8px}
   #btn-start{width:100%;min-width:0}
@@ -383,6 +418,8 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 @media(max-width:400px){
   .brand-title{display:none}
   .room-chip .room-label{max-width:56px}
+  .mission-grid{grid-template-columns:repeat(2,1fr)}
+  .mission-chip-text{max-width:84px}
 }
 </style>
 </head>
@@ -411,6 +448,10 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
     <div class="hud-chip score-chip" title="Score">
       <i class="fa-solid fa-trophy"></i>
       <span id="hud-score" class="score">0</span>
+    </div>
+    <div id="mission-chip" class="hud-chip mission-chip" title="Mission objective">
+      <i id="mission-chip-icon" class="fa-solid fa-infinity"></i>
+      <span id="mission-chip-text" class="mission-chip-text">ENDLESS</span>
     </div>
     <div id="room-chip" class="hud-chip room-chip" title="Live room">
       <span class="dot"></span>
@@ -442,14 +483,15 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 <!-- ============================ LEFT PANEL ============================ -->
 <aside id="panel-left" class="side-panel">
   <section class="card">
-    <div class="card-head"><h3><i class="fa-solid fa-list-check"></i> Mission</h3><span id="mission-wave" class="mini-chip">WAVE 1</span></div>
+    <div class="card-head"><h3><i class="fa-solid fa-list-check"></i> <span id="mission-name">Endless Night</span></h3><span id="mission-wave" class="mini-chip">WAVE 1</span></div>
     <div class="card-body">
       <div class="objective">
-        <div class="obj-icon cyan"><i class="fa-solid fa-box-open"></i></div>
+        <div id="mission-icon" class="obj-icon violet"><i class="fa-solid fa-infinity"></i></div>
         <div class="obj-main">
-          <div class="obj-label">Supply caches</div>
-          <div class="obj-value"><span id="obj-supplies">0</span><span style="color:var(--dim);font-size:10px"> / 0</span></div>
+          <div id="mission-label" class="obj-label">Objective</div>
+          <div class="obj-value" id="mission-value">No limit</div>
           <div class="progress"><div id="obj-progress" style="width:0%"></div></div>
+          <div id="mission-hint" class="mission-hint">Survive the waves and score high.</div>
         </div>
       </div>
       <div class="objective">
@@ -484,11 +526,15 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 
   <section class="card">
     <div class="card-head"><h3><i class="fa-solid fa-circle-info"></i> Field Guide</h3></div>
-    <div class="card-body legend">
-      <span><i class="fa-solid fa-circle l-player"></i> You</span>
-      <span><i class="fa-solid fa-circle l-zombie"></i> Infected</span>
-      <span><i class="fa-solid fa-square l-supply"></i> Supplies</span>
-      <span><i class="fa-solid fa-circle l-remote"></i> Squadmate</span>
+    <div class="card-body">
+      <div class="legend">
+        <span><i class="fa-solid fa-circle l-player"></i> You</span>
+        <span><i class="fa-solid fa-circle l-zombie"></i> Infected</span>
+        <span><i class="fa-solid fa-square l-supply"></i> Supplies</span>
+        <span><i class="fa-solid fa-circle l-remote"></i> Squadmate</span>
+      </div>
+      <div class="guide-sub">Infected types · sight range</div>
+      <div id="zguide" class="legend zguide"></div>
     </div>
   </section>
 </aside>
@@ -604,13 +650,36 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
         <p style="margin:9px 0 0;font-size:9px;line-height:1.45;color:var(--dim)">Infected travel roads, paths, parks and fields — never through houses or private property.</p>
       </section>
 
+      <section class="step wide">
+        <div class="step-head"><span class="step-num">04</span><h4>Difficulty</h4><span id="difficulty-status" class="step-status">standard</span></div>
+        <div class="diff-grid">
+          <button class="diff" data-diff="easy" style="--dc:#6dffa8" type="button"><i class="fa-solid fa-leaf"></i><span class="nm">Easy</span><span class="sp">Sparse horde</span></button>
+          <button class="diff active" data-diff="normal" style="--dc:#4fe3ff" type="button"><i class="fa-solid fa-shield-halved"></i><span class="nm">Standard</span><span class="sp">Balanced</span></button>
+          <button class="diff" data-diff="hard" style="--dc:#ffb648" type="button"><i class="fa-solid fa-fire"></i><span class="nm">Hard</span><span class="sp">Dense horde</span></button>
+          <button class="diff" data-diff="nightmare" style="--dc:#ff4d5e" type="button"><i class="fa-solid fa-skull-crossbones"></i><span class="nm">Nightmare</span><span class="sp">No mercy</span></button>
+        </div>
+        <p id="difficulty-desc" class="setup-note">Balanced horde size, vision and damage. The intended outbreak.</p>
+      </section>
+
+      <section class="step wide">
+        <div class="step-head"><span class="step-num">05</span><h4>Mission</h4><span id="mission-status" class="step-status">endless</span></div>
+        <div class="mission-grid">
+          <button class="mission active" data-mission="endless" type="button"><i class="fa-solid fa-infinity"></i><span class="nm">Endless</span><span class="sp">Score run</span></button>
+          <button class="mission" data-mission="survive" type="button"><i class="fa-solid fa-hourglass-half"></i><span class="nm">Survive</span><span class="sp">5:00</span></button>
+          <button class="mission" data-mission="supplies" type="button"><i class="fa-solid fa-box-open"></i><span class="nm">Supplies</span><span class="sp">12 caches</span></button>
+          <button class="mission" data-mission="distance" type="button"><i class="fa-solid fa-person-running"></i><span class="nm">Distance</span><span class="sp">1.50 mi</span></button>
+          <button class="mission" data-mission="extraction" type="button"><i class="fa-solid fa-helicopter"></i><span class="nm">Extraction</span><span class="sp">Beacon</span></button>
+        </div>
+        <p id="mission-desc" class="setup-note">No extraction. Survive the waves and rack up the highest score you can.</p>
+      </section>
+
       <section class="step">
-        <div class="step-head"><span class="step-num">04</span><h4>Callsign &amp; Room</h4><span class="step-status">optional</span></div>
+        <div class="step-head"><span class="step-num">06</span><h4>Callsign &amp; Room</h4><span class="step-status">optional</span></div>
         <div style="display:flex;flex-direction:column;gap:6px">
           <input id="name-input" class="input" placeholder="Callsign" maxlength="16" autocomplete="off" spellcheck="false">
           <input id="room-input" class="input" placeholder="Room code (join friends)" maxlength="10" autocomplete="off" spellcheck="false">
         </div>
-        <p style="margin:8px 0 0;font-size:9px;line-height:1.45;color:var(--dim)">Share a code to see squadmates live and compete on the room leaderboard. Leave blank for a solo run.</p>
+        <p style="margin:8px 0 0;font-size:9px;line-height:1.45;color:var(--dim)">Share a code to see the same horde, squadmates live, and compete on the room leaderboard. Leave blank for a solo run.</p>
       </section>
     </div>
 
@@ -635,6 +704,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
       <div class="end-stat"><div class="k">Survived</div><div id="end-time" class="v">0:00</div></div>
       <div class="end-stat"><div class="k">Waves</div><div id="end-wave" class="v">1</div></div>
       <div class="end-stat"><div class="k">Personal Best</div><div id="end-best" class="v" style="color:var(--amber)">0</div></div>
+      <div class="end-stat" style="grid-column:1/-1"><div class="k">Mission</div><div id="end-mission" class="v" style="font-size:12px">Endless Night</div></div>
     </div>
     <div class="end-actions">
       <button id="btn-again" class="btn btn-red" type="button"><i class="fa-solid fa-rotate-right"></i> Run Again</button>
@@ -684,6 +754,13 @@ function bearing(lat1, lng1, lat2, lng2) {
             Math.sin(lat1 * toRad) * Math.cos(lat2 * toRad) * Math.cos((lng2 - lng1) * toRad);
   return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
 }
+function destPoint(lat, lng, distM, brgDeg) {
+  const R = 6371000, br = brgDeg * Math.PI / 180;
+  const la1 = lat * Math.PI / 180, lo1 = lng * Math.PI / 180;
+  const la2 = Math.asin(Math.sin(la1) * Math.cos(distM / R) + Math.cos(la1) * Math.sin(distM / R) * Math.cos(br));
+  const lo2 = lo1 + Math.atan2(Math.sin(br) * Math.sin(distM / R) * Math.cos(la1), Math.cos(distM / R) - Math.sin(la1) * Math.sin(la2));
+  return [la2 * 180 / Math.PI, lo2 * 180 / Math.PI];
+}
 const COMPASS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
 const compass = deg => COMPASS[Math.round(deg / 45) % 8];
 const fmtFeet = m => `${Math.round(m / M_PER_FT).toLocaleString()} ft`;
@@ -708,6 +785,91 @@ function hashHue(str) {
   return h;
 }
 
+/* ---------------- difficulty, missions & infected types ---------------- */
+const DIFFICULTIES = {
+  easy: {
+    name: 'Easy', label: 'easy', cap: 30, ambient: 16, perWave: 3, spawnEvery: 9000,
+    speedMul: 0.85, damageMul: 0.7, visionMul: 0.85, supplyMul: 1.15, scoreMul: 0.8,
+    desc: 'Sparse, slower horde. More supply drops. Good for learning the streets.',
+  },
+  normal: {
+    name: 'Standard', label: 'standard', cap: 46, ambient: 26, perWave: 4, spawnEvery: 6500,
+    speedMul: 1, damageMul: 1, visionMul: 1, supplyMul: 1, scoreMul: 1,
+    desc: 'Balanced horde size, vision and damage. The intended outbreak.',
+  },
+  hard: {
+    name: 'Hard', label: 'hard', cap: 64, ambient: 38, perWave: 6, spawnEvery: 4800,
+    speedMul: 1.15, damageMul: 1.3, visionMul: 1.2, supplyMul: 0.9, scoreMul: 1.25,
+    desc: 'Dense, faster and sharper-eyed infected. Fewer caches.',
+  },
+  nightmare: {
+    name: 'Nightmare', label: 'nightmare', cap: 82, ambient: 52, perWave: 8, spawnEvery: 3500,
+    speedMul: 1.3, damageMul: 1.65, visionMul: 1.45, supplyMul: 0.8, scoreMul: 1.5,
+    desc: 'Maximum horde. Brutal damage and vision. No mercy.',
+  },
+};
+
+const MISSIONS = {
+  endless: {
+    name: 'Endless Night', short: 'endless', tag: 'Endless', icon: 'fa-infinity', tone: 'violet', color: '#b18cff',
+    desc: 'No extraction. Survive the waves and rack up the highest score you can.',
+    targetText: 'No limit', bonus: 0, winText: 'You outlasted the night.',
+  },
+  survive: {
+    name: 'Hold the Line', short: 'survive 5:00', tag: 'Survive', icon: 'fa-hourglass-half', tone: 'amber', color: '#ffb648',
+    desc: 'Stay alive for 5 minutes while the horde closes in.',
+    target: 300, targetText: '5:00', bonus: 1200, winText: 'You held out until dawn.',
+  },
+  supplies: {
+    name: 'Supply Run', short: '12 caches', tag: 'Supplies', icon: 'fa-box-open', tone: 'cyan', color: '#4fe3ff',
+    desc: 'Recover 12 supply caches scattered across the neighborhood.',
+    target: 12, targetText: '12 caches', bonus: 1500, winText: 'The stash is secured.',
+  },
+  distance: {
+    name: 'Distance Dash', short: '1.50 mi', tag: 'Distance', icon: 'fa-person-running', tone: 'green', color: '#6dffa8',
+    desc: 'Cover 1.50 miles on foot without getting caught.',
+    target: 1.5, targetText: '1.50 mi', bonus: 1400, winText: 'Distance target smashed.',
+  },
+  extraction: {
+    name: 'Extraction', short: 'beacon', tag: 'Extraction', icon: 'fa-helicopter', tone: 'green', color: '#6dffa8',
+    desc: 'A rescue beacon is live in the zone. Reach it before the horde does.',
+    targetText: 'Reach the beacon', bonus: 2000, winText: 'Extraction successful. You made it out.',
+  },
+};
+
+const ZOMBIE_TYPES = {
+  crawler: {
+    id: 'crawler', name: 'Crawler', icon: 'fa-bug', color: '#b18cff',
+    speedMul: 0.45, visionM: 28, damageMul: 1.25, attackM: 1.6, size: 24,
+  },
+  walker: {
+    id: 'walker', name: 'Walker', icon: 'fa-person-walking', color: '#ff6b78',
+    speedMul: 0.82, visionM: 50, damageMul: 0.9, attackM: 2.0, size: 30,
+  },
+  brute: {
+    id: 'brute', name: 'Brute', icon: 'fa-skull', color: '#ff2d3f',
+    speedMul: 0.62, visionM: 55, damageMul: 2.0, attackM: 2.4, size: 40,
+  },
+  runner: {
+    id: 'runner', name: 'Runner', icon: 'fa-person-running', color: '#ff9a3d',
+    speedMul: 1.45, visionM: 75, damageMul: 1.0, attackM: 2.0, size: 28,
+  },
+  screamer: {
+    id: 'screamer', name: 'Screamer', icon: 'fa-bullhorn', color: '#ffd166',
+    speedMul: 1.0, visionM: 92, damageMul: 0.7, attackM: 1.8, size: 30,
+  },
+  stalker: {
+    id: 'stalker', name: 'Stalker', icon: 'fa-eye', color: '#4fe3ff',
+    speedMul: 0.95, visionM: 130, damageMul: 1.1, attackM: 2.0, size: 27,
+  },
+  player: {
+    id: 'player', name: 'Fallen runner', icon: 'fa-person', color: '#b18cff',
+    speedMul: 0.9, visionM: 110, damageMul: 1.2, attackM: 2.0, size: 32,
+  },
+};
+const ZOMBIE_ORDER = ['crawler', 'walker', 'brute', 'runner', 'screamer', 'stalker', 'player'];
+const ATTACK_RANGE_DEFAULT_M = 2.1; // ~7 ft
+
 /* ---------------- state ---------------- */
 const state = {
   home: null,
@@ -722,6 +884,15 @@ const state = {
   zone: null,
   zombieMph: 5.5,
   zombieMps: 5.5 * MPS_PER_MPH,
+  difficulty: 'normal',
+  mission: 'endless',
+  collectedTotal: 0,
+  missionComplete: false,
+  missionStarted: false,
+  missionStartDist: 0,
+  beacon: null,
+  beaconMarker: null,
+  beaconCircle: null,
   hp: 100,
   score: 0,
   supplies: 0,
@@ -733,6 +904,7 @@ const state = {
   elapsed: 0,
   startedAt: 0,
   lastTick: 0,
+  alertedCount: 0,
   name: '',
   room: '',
   nearestZombie: Infinity,
@@ -769,7 +941,17 @@ const hudWave = $('#hud-wave');
 const hudTime = $('#hud-time');
 const hudSpeed = $('#hud-speed');
 const speedFill = $('#speed-fill');
-const objSupplies = $('#obj-supplies');
+const missionName = $('#mission-name');
+const missionIcon = $('#mission-icon');
+const missionValue = $('#mission-value');
+const missionHint = $('#mission-hint');
+const missionChip = $('#mission-chip');
+const missionChipIcon = $('#mission-chip-icon');
+const missionChipText = $('#mission-chip-text');
+const difficultyStatus = $('#difficulty-status');
+const difficultyDesc = $('#difficulty-desc');
+const missionStatus = $('#mission-status');
+const missionDesc = $('#mission-desc');
 const objHorde = $('#obj-horde');
 const objDistance = $('#obj-distance');
 const objProgress = $('#obj-progress');
@@ -827,6 +1009,7 @@ class SoundEngine {
   collect() { this.tone(660, 990, 0.14, 'sine', 0.18); this.tone(990, 1320, 0.18, 'sine', 0.13, 0.08); }
   damage() { this.tone(150, 45, 0.28, 'sawtooth', 0.26); }
   wave() { [523, 659, 784, 1046].forEach((f, i) => this.tone(f, null, 0.2, 'triangle', 0.16, i * 0.09)); }
+  scream() { this.tone(760, 190, 0.5, 'sawtooth', 0.16); this.tone(430, 110, 0.62, 'square', 0.09, 0.08); }
   over() { [330, 262, 208, 155].forEach((f, i) => this.tone(f, null, 0.35, 'sawtooth', 0.14, i * 0.16)); }
   startSiren() {
     if (!this.ctx || this.muted || this.siren) return;
@@ -895,6 +1078,42 @@ function recenterMap(zoom) {
   map.setView([state.player.lat, state.player.lng], zoom || Math.max(map.getZoom(), 16), { animate: true });
 }
 
+/* ---------------- player sight cone ---------------- */
+const fov = { layers: [], rangeM: 66, halfAngle: 50 * Math.PI / 180, specs: [1, 0.66, 0.33] };
+function ensureFov() {
+  if (!map || fov.layers.length) return;
+  const style = [
+    { scale: 1, opacity: 0.05, line: 0.32 },
+    { scale: 0.66, opacity: 0.06, line: 0.16 },
+    { scale: 0.33, opacity: 0.075, line: 0 },
+  ];
+  fov.layers = style.map(s => L.polygon([], {
+    color: '#b8ffd0', weight: 1, opacity: s.line,
+    fillColor: '#eaffd8', fillOpacity: s.opacity,
+    interactive: false, smoothFactor: 1,
+  }).addTo(map));
+}
+function updateFov() {
+  if (!map) return;
+  if (!state.gameActive || !state.player) {
+    fov.layers.forEach(l => { try { l.setLatLngs([]); } catch (e) {} });
+    return;
+  }
+  ensureFov();
+  const heading = Number.isFinite(state.heading) ? state.heading : 0;
+  const halfDeg = fov.halfAngle * 180 / Math.PI;
+  const steps = 12;
+  fov.layers.forEach((layer, idx) => {
+    const scale = fov.specs[idx] || 1;
+    const pts = [[state.player.lat, state.player.lng]];
+    for (let i = 0; i <= steps; i++) {
+      const a = heading - halfDeg + (i / steps) * halfDeg * 2;
+      pts.push(destPoint(state.player.lat, state.player.lng, fov.rangeM * scale, a));
+    }
+    layer.setLatLngs(pts);
+  });
+}
+
 /* ---------------- toasts ---------------- */
 function toast(msg, type = 'info', ms = 2400) {
   if (!toastsEl) return;
@@ -919,6 +1138,8 @@ function loadPrefs() {
   state.room = prefs.room || '';
   state.radiusMi = clamp(parseFloat(prefs.radiusMi) || 0.5, 0.15, 1.5);
   state.zombieMph = [3.5, 5.5, 7.5].includes(parseFloat(prefs.zombieMph)) ? parseFloat(prefs.zombieMph) : 5.5;
+  state.difficulty = DIFFICULTIES[prefs.difficulty] ? prefs.difficulty : 'normal';
+  state.mission = MISSIONS[prefs.mission] ? prefs.mission : 'endless';
   state.muted = !!prefs.muted;
   nameInput.value = state.name;
   roomInput.value = state.room;
@@ -926,6 +1147,8 @@ function loadPrefs() {
   radiusRange.value = state.radiusMi;
   syncRadiusUI();
   syncPaceUI();
+  syncDifficultyUI();
+  syncMissionUI();
   audio.setMuted(state.muted);
   audioIcon.className = state.muted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
   $('#btn-audio').classList.toggle('on', !state.muted);
@@ -944,7 +1167,8 @@ function savePrefs() {
   try {
     localStorage.setItem('zrun.prefs.v2', JSON.stringify({
       name: state.name, room: state.room, radiusMi: state.radiusMi,
-      zombieMph: state.zombieMph, muted: state.muted,
+      zombieMph: state.zombieMph, difficulty: state.difficulty, mission: state.mission,
+      muted: state.muted,
     }));
   } catch (e) {}
 }
@@ -962,6 +1186,34 @@ function syncPaceUI() {
   $$('.pace').forEach(b => b.classList.toggle('active', Math.abs(parseFloat(b.dataset.mph) - state.zombieMph) < 0.01));
   const p = $$('.pace').find(b => Math.abs(parseFloat(b.dataset.mph) - state.zombieMph) < 0.01);
   $('#pace-status').textContent = p ? p.querySelector('.nm').textContent.toLowerCase() : 'custom';
+}
+function syncDifficultyUI() {
+  $$('.diff').forEach(b => b.classList.toggle('active', b.dataset.diff === state.difficulty));
+  const d = DIFFICULTIES[state.difficulty] || DIFFICULTIES.normal;
+  if (difficultyStatus) difficultyStatus.textContent = d.label;
+  if (difficultyDesc) difficultyDesc.textContent = d.desc;
+}
+function syncMissionUI() {
+  $$('.mission').forEach(b => b.classList.toggle('active', b.dataset.mission === state.mission));
+  const m = MISSIONS[state.mission] || MISSIONS.endless;
+  if (missionStatus) missionStatus.textContent = m.short;
+  if (missionDesc) missionDesc.textContent = m.desc;
+  if (missionHint) missionHint.textContent = m.desc;
+  if (missionName) missionName.textContent = m.name;
+  if (missionIcon && missionIcon.dataset.mission !== state.mission) {
+    missionIcon.dataset.mission = state.mission;
+    missionIcon.className = `obj-icon ${m.tone}`;
+    missionIcon.innerHTML = `<i class="fa-solid ${m.icon}"></i>`;
+  }
+}
+function renderZombieGuide() {
+  const el = $('#zguide');
+  if (!el) return;
+  el.innerHTML = ZOMBIE_ORDER.map(key => {
+    const t = ZOMBIE_TYPES[key];
+    const ft = Math.round(t.visionM / M_PER_FT);
+    return `<span title="${escapeHtml(t.name)} · sees ${ft} ft"><i class="fa-solid ${t.icon}" style="color:${t.color}"></i><span class="zg-name">${escapeHtml(t.name)}</span><span class="zg-vision">${ft} ft</span></span>`;
+  }).join('');
 }
 function updateStartState() {
   btnStart.disabled = !state.home;
@@ -1214,6 +1466,7 @@ function onGpsFix(pos) {
   setPlayerPosition(c.latitude, c.longitude, {
     accuracy: c.accuracy || 0,
     speedMps: (c.speed != null && isFinite(c.speed) && c.speed >= 0) ? c.speed : null,
+    heading: (c.heading != null && isFinite(c.heading)) ? c.heading : undefined,
     ts: pos.timestamp || Date.now(),
   });
   if (state.accuracyCircle) {
@@ -1266,6 +1519,7 @@ function setPlayerPosition(lat, lng, opts = {}) {
   const accuracy = opts.accuracy || 0;
   const minMove = opts.force ? 0.01 : Math.max(1.2, accuracy * 0.3);
   const teleport = opts.teleport === true;
+  if (opts.heading != null && isFinite(opts.heading)) state.heading = (Number(opts.heading) + 360) % 360;
 
   if (!teleport && d >= minMove && d < 400 && dt < 45) {
     state.distanceM += d;
@@ -1322,7 +1576,17 @@ const SUPPLY_TYPES = [
   { id: 'battery', name: 'Radio battery', icon: 'fa-bolt', color: '#6dffa8', points: 120, heal: 6 },
 ];
 
-function waveSupplyCount() { return Math.min(16, 6 + state.wave * 2); }
+function waveSupplyCount() {
+  const base = Math.min(16, 6 + state.wave * 2);
+  return Math.max(4, Math.round(base * currentDifficulty().supplyMul));
+}
+function initialSupplyCount() {
+  if (state.mission === 'supplies') {
+    const target = MISSIONS.supplies.target;
+    return Math.max(target, Math.round(target * currentDifficulty().supplyMul));
+  }
+  return waveSupplyCount();
+}
 
 function spawnSupplies(count) {
   waypoints.forEach(w => { if (w.marker) map.removeLayer(w.marker); });
@@ -1358,6 +1622,100 @@ function createSupplyWaypoint(lat, lng) {
   waypoints.push({ marker, lat, lng, type, collected: false });
 }
 
+function clearBeacon() {
+  if (state.beaconMarker) { map.removeLayer(state.beaconMarker); state.beaconMarker = null; }
+  if (state.beaconCircle) { map.removeLayer(state.beaconCircle); state.beaconCircle = null; }
+  state.beacon = null;
+}
+
+let beaconRetryAt = 0;
+function setupMission() {
+  const m = MISSIONS[state.mission] || MISSIONS.endless;
+  state.missionStarted = true;
+  state.missionComplete = false;
+  state.missionStartDist = state.distanceM;
+  state.collectedTotal = 0;
+  clearBeacon();
+  if (state.mission !== 'extraction') return;
+  if (!nav.ready || !state.player) {
+    state.missionStarted = false;
+    return;
+  }
+  const zoneR = state.radiusMi * M_PER_MI;
+  const node = pickSpawnNode({
+    minDist: Math.max(120, zoneR * 0.42),
+    maxDist: Math.max(220, zoneR * 0.92),
+    minSep: 0, avoidZombies: false, tries: 320,
+  });
+  if (!node) {
+    state.missionStarted = false;
+    return;
+  }
+  state.beacon = { lat: node.lat, lng: node.lng };
+  const icon = L.divIcon({
+    className: 'extract-marker',
+    html: '<div class="extract-pulse"></div><div class="extract-core"><i class="fa-solid fa-helicopter"></i></div>',
+    iconSize: [42, 42], iconAnchor: [21, 21],
+  });
+  state.beaconMarker = L.marker([node.lat, node.lng], { icon, zIndexOffset: 420, interactive: false }).addTo(map);
+  state.beaconCircle = L.circle([node.lat, node.lng], {
+    radius: 26, color: '#6dffa8', weight: 1, opacity: 0.55,
+    fillColor: '#6dffa8', fillOpacity: 0.07, interactive: false,
+  }).addTo(map);
+  toast(`Extraction beacon live · ${fmtMiles(haversine(state.player.lat, state.player.lng, node.lat, node.lng))} away`, 'info', 3600);
+}
+
+function missionProgress() {
+  const m = MISSIONS[state.mission] || MISSIONS.endless;
+  if (state.mission === 'survive') {
+    const left = Math.max(0, m.target - state.elapsed);
+    return { text: `${fmtTime(left)} left`, pct: clamp(state.elapsed / m.target * 100, 0, 100) };
+  }
+  if (state.mission === 'supplies') {
+    return { text: `${state.collectedTotal} / ${m.target} caches`, pct: clamp(state.collectedTotal / m.target * 100, 0, 100) };
+  }
+  if (state.mission === 'distance') {
+    const d = state.distanceM / M_PER_MI;
+    return { text: `${d.toFixed(2)} / ${m.target.toFixed(2)} mi`, pct: clamp(d / m.target * 100, 0, 100) };
+  }
+  if (state.mission === 'extraction') {
+    if (!state.beacon) return { text: 'Beacon pending', pct: 0 };
+    if (!state.player) return { text: 'Reach the beacon', pct: 0 };
+    const d = haversine(state.player.lat, state.player.lng, state.beacon.lat, state.beacon.lng);
+    return { text: `${Math.round(d / M_PER_FT)} ft to beacon`, pct: clamp(100 - d / 320 * 100, 0, 100) };
+  }
+  return { text: 'No limit', pct: 0 };
+}
+
+function checkMission() {
+  if (!state.gameActive || state.missionComplete) return;
+  const m = MISSIONS[state.mission];
+  if (!m || state.mission === 'endless') return;
+  if (state.mission === 'extraction' && !state.beacon && nav.ready && performance.now() >= beaconRetryAt) {
+    beaconRetryAt = performance.now() + 3000;
+    setupMission();
+  }
+  let done = false;
+  if (state.mission === 'survive') done = state.elapsed >= m.target;
+  else if (state.mission === 'supplies') done = state.collectedTotal >= m.target;
+  else if (state.mission === 'distance') done = state.distanceM / M_PER_MI >= m.target;
+  else if (state.mission === 'extraction' && state.beacon && state.player) {
+    done = haversine(state.player.lat, state.player.lng, state.beacon.lat, state.beacon.lng) <= 24;
+  }
+  if (done) completeMission();
+}
+
+function completeMission() {
+  if (!state.gameActive || state.missionComplete) return;
+  state.missionComplete = true;
+  const m = MISSIONS[state.mission] || MISSIONS.endless;
+  const bonus = Math.round((m.bonus || 0) * currentDifficulty().scoreMul);
+  state.score += bonus;
+  audio.wave();
+  toast(`${m.name} complete · +${bonus} bonus`, 'good', 3200);
+  endGame(true);
+}
+
 function checkWaypointCollisions() {
   if (!state.player || !state.gameActive) return;
   for (const wp of waypoints) {
@@ -1365,19 +1723,22 @@ function checkWaypointCollisions() {
     if (haversine(state.player.lat, state.player.lng, wp.lat, wp.lng) <= 18) {
       wp.collected = true;
       if (wp.marker) map.removeLayer(wp.marker);
-      state.score += wp.type.points;
+      const pts = Math.round(wp.type.points * currentDifficulty().scoreMul);
+      state.score += pts;
       state.supplies++;
+      state.collectedTotal++;
       state.hp = clamp(state.hp + wp.type.heal, 0, 100);
       audio.collect();
-      toast(`+${wp.type.points} · ${wp.type.name}${wp.type.heal ? ` (+${wp.type.heal} HP)` : ''}`, 'good', 2100);
+      toast(`+${pts} · ${wp.type.name}${wp.type.heal ? ` (+${wp.type.heal} HP)` : ''}`, 'good', 2100);
       publishState();
-      if (waypoints.length && waypoints.every(w => w.collected)) completeWave();
+      checkMission();
+      if (state.gameActive && waypoints.length && waypoints.every(w => w.collected)) completeWave();
     }
   }
 }
 
 function completeWave() {
-  const bonus = 300 * state.wave;
+  const bonus = Math.round(300 * state.wave * currentDifficulty().scoreMul);
   state.score += bonus;
   audio.wave();
   toast(`Wave ${state.wave} cleared · +${bonus} bonus`, 'good', 3200);
@@ -1582,8 +1943,9 @@ async function loadNavigation() {
   const b0 = zoneBounds();
   const key = `${b0.getSouth().toFixed(4)},${b0.getWest().toFixed(4)},${b0.getNorth().toFixed(4)},${b0.getEast().toFixed(4)}`;
   if (nav.ready && nav.key === key && nav.nodes.length) {
-    if (!waypoints.length) spawnSupplies(waveSupplyCount());
+    if (!waypoints.length) spawnSupplies(initialSupplyCount());
     spawnInitialZombies();
+    if (!state.missionStarted) setupMission();
     return;
   }
 
@@ -1654,8 +2016,9 @@ out skel qt;`;
   nav.loading = false;
 
   if (state.gameActive) {
-    if (!waypoints.length) spawnSupplies(waveSupplyCount());
+    if (!waypoints.length) spawnSupplies(initialSupplyCount());
     spawnInitialZombies();
+    if (!state.missionStarted) setupMission();
   }
 }
 
@@ -1748,44 +2111,107 @@ function findPathCached(startId, goalId) {
 /* ============================================================
    ZOMBIE HORDE — graph-bound pursuit
    ============================================================ */
+function currentDifficulty() {
+  return DIFFICULTIES[state.difficulty] || DIFFICULTIES.normal;
+}
+function zombieCap() {
+  const d = currentDifficulty();
+  return Math.min(d.cap, d.ambient + (state.wave - 1) * d.perWave);
+}
+function zoneNodePool() {
+  if (!nav.ready || !nav.nodes.length) return [];
+  const inZone = nav.nodes.filter(n => isInZone(n.lat, n.lng));
+  return inZone.length ? inZone : nav.nodes;
+}
+function pickSpawnNode(opts = {}) {
+  const origin = opts.origin || state.player;
+  if (!origin || !nav.ready) return null;
+  const pool = zoneNodePool();
+  if (!pool.length) return null;
+  const minDist = opts.minDist ?? 80;
+  const maxDist = opts.maxDist ?? 0;
+  const minSep = opts.minSep ?? 26;
+  const tries = opts.tries ?? 180;
+  const avoidZombies = opts.avoidZombies !== false;
+  for (let i = 0; i < tries; i++) {
+    const n = pool[Math.floor(Math.random() * pool.length)];
+    if (!n) continue;
+    const d = haversine(origin.lat, origin.lng, n.lat, n.lng);
+    if (d < minDist) continue;
+    if (maxDist && d > maxDist) continue;
+    if (avoidZombies && minSep > 0 && zombies.some(z => haversine(z.lat, z.lng, n.lat, n.lng) < minSep)) continue;
+    return n;
+  }
+  return null;
+}
+function pickZombieType(wave) {
+  const w = {
+    crawler: 16,
+    walker: 46,
+    brute: wave >= 3 ? 5 + wave : 1,
+    runner: wave >= 2 ? 10 + wave * 2 : 5,
+    screamer: wave >= 2 ? 4 + wave : 1,
+    stalker: wave >= 2 ? 5 + wave : 1,
+  };
+  let total = 0;
+  for (const k in w) total += w[k];
+  let r = Math.random() * total;
+  for (const k in w) { r -= w[k]; if (r <= 0) return ZOMBIE_TYPES[k]; }
+  return ZOMBIE_TYPES.walker;
+}
+function addZombieAt(node, type, opts = {}) {
+  const t = type || ZOMBIE_TYPES.walker;
+  const marker = L.marker([node.lat, node.lng], {
+    icon: L.divIcon({
+      className: 'zombie-marker',
+      html: `<div class="zombie-ring" style="--zs:${t.size}px"></div><div class="zombie-core" style="--zc:${t.color};--zs:${t.size}px"><i class="fa-solid ${t.icon}"></i></div>`,
+      iconSize: [t.size, t.size], iconAnchor: [t.size / 2, t.size / 2],
+    }),
+    zIndexOffset: 200 + Math.round(40 - t.size),
+    interactive: false,
+  }).addTo(map);
+  const z = {
+    id: opts.id || uid(), marker, lat: node.lat, lng: node.lng,
+    type: t, typeId: t.id, visionM: t.visionM, speedMul: t.speedMul, damageMul: t.damageMul,
+    path: [], pathIndex: 0, repathAt: 0, attackAt: 0,
+    speedFactor: rand(0.88, 1.12), facing: rand(0, 360),
+    alertUntil: 0, alerted: false, screamAt: 0,
+    wanderEdge: null, wanderPauseUntil: 0,
+    remote: !!opts.remote, tLat: node.lat, tLng: node.lng, lastSync: Date.now(),
+    ownerId: opts.ownerId || null, playerZombie: !!opts.playerZombie,
+  };
+  zombies.push(z);
+  return z;
+}
 function spawnInitialZombies() {
   if (!state.gameActive) return;
-  const n = Math.min(5, 2 + state.wave);
-  for (let i = 0; i < n; i++) spawnZombie();
-}
-
-function spawnZombie() {
-  if (!state.gameActive || !nav.ready || !state.player) return;
-  const cap = Math.min(16, 4 + state.wave * 2);
-  if (zombies.length >= cap) return;
-  const p = state.player;
-  const inZone = nav.nodes.filter(n => isInZone(n.lat, n.lng));
-  const pool = inZone.length ? inZone : nav.nodes;
-  let candidates = pool.filter(n => {
-    const d = haversine(p.lat, p.lng, n.lat, n.lng);
-    return d >= 110 && d <= 480;
-  });
-  if (!candidates.length) {
-    candidates = pool.filter(n => {
-      const d = haversine(p.lat, p.lng, n.lat, n.lng);
-      return d >= 55 && d <= 600;
-    });
+  if (net.connected && !isHordeHost()) return;
+  const target = zombieCap();
+  let guard = 0;
+  while (zombies.length < target && guard++ < target * 30) {
+    const sep = guard > target * 10 ? 16 : 30;
+    const node = pickSpawnNode({ minDist: 60, minSep: sep, tries: 120 });
+    if (!node) break;
+    addZombieAt(node, pickZombieType(state.wave));
   }
-  if (!candidates.length) return;
-  const node = candidates[Math.floor(Math.random() * candidates.length)];
-  const icon = L.divIcon({
-    className: 'zombie-marker',
-    html: '<div class="zombie-ring"></div><div class="zombie-core"><i class="fa-solid fa-biohazard"></i></div>',
-    iconSize: [30, 30], iconAnchor: [15, 15],
-  });
-  const marker = L.marker([node.lat, node.lng], { icon, zIndexOffset: 200, interactive: false }).addTo(map);
-  zombies.push({
-    id: uid(), marker, lat: node.lat, lng: node.lng,
-    path: [], pathIndex: 0, repathAt: 0, attackAt: 0,
-    speedFactor: rand(0.88, 1.12),
-  });
 }
-
+function spawnZombie(opts = {}) {
+  if (!state.gameActive || !nav.ready || !state.player) return null;
+  if (net.connected && !isHordeHost()) return null;
+  if (zombies.length >= zombieCap()) return null;
+  let node = pickSpawnNode({ minDist: opts.minDist ?? 110, maxDist: opts.maxDist ?? 0, minSep: opts.minSep ?? 26, tries: 140 });
+  if (!node) node = pickSpawnNode({ minDist: 60, maxDist: 0, minSep: 14, tries: 120 });
+  if (!node) return null;
+  return addZombieAt(node, opts.type || pickZombieType(state.wave));
+}
+function alertNearby(z, radiusM, now) {
+  for (const o of zombies) {
+    if (o === z) continue;
+    if (haversine(z.lat, z.lng, o.lat, o.lng) <= radiusM) {
+      o.alertUntil = Math.max(o.alertUntil || 0, now + 7000);
+    }
+  }
+}
 function stepToward(z, lat, lng, stepM) {
   const d = haversine(z.lat, z.lng, lat, lng);
   if (d < 0.01) return;
@@ -1793,21 +2219,19 @@ function stepToward(z, lat, lng, stepM) {
   z.lat += (lat - z.lat) * f;
   z.lng += (lng - z.lng) * f;
 }
-
-function followPath(z, stepM) {
-  if (!z.path || !z.path.length) { greedyStep(z, stepM); return; }
+function followPath(z, stepM, target) {
+  if (!z.path || !z.path.length) { greedyStep(z, stepM, target); return; }
   let node = nav.byId.get(z.path[z.pathIndex]);
   let guard = 0;
   while (node && haversine(z.lat, z.lng, node.lat, node.lng) < 5 && guard++ < 60) {
     z.pathIndex++;
     node = nav.byId.get(z.path[z.pathIndex]);
   }
-  if (!node) { z.path = []; greedyStep(z, stepM); return; }
+  if (!node) { z.path = []; greedyStep(z, stepM, target); return; }
   stepToward(z, node.lat, node.lng, stepM);
 }
-
-function greedyStep(z, stepM) {
-  const p = state.player;
+function greedyStep(z, stepM, target) {
+  const p = target || state.player;
   const n = nearestNode(z.lat, z.lng);
   if (!n) { stepToward(z, p.lat, p.lng, stepM); return; }
   let best = n;
@@ -1820,55 +2244,208 @@ function greedyStep(z, stepM) {
   }
   stepToward(z, best.lat, best.lng, stepM);
 }
-
-function updateZombies(dt) {
-  if (!nav.ready || !state.player) return;
-  const p = state.player;
-  const now = performance.now();
-  const pGreen = greenPoly(p.lat, p.lng);
-  const pOffNetwork = nearestNodeDistance(p.lat, p.lng) > 40;
-  let nearest = Infinity, nearestZ = null;
-
+function wanderStep(z, stepM, now) {
+  if (now < z.wanderPauseUntil) return;
+  let target = z.wanderEdge ? nav.byId.get(z.wanderEdge) : null;
+  if (!target) {
+    const n = nearestNode(z.lat, z.lng);
+    if (!n || !n.adj.length) return;
+    if (Math.random() < 0.32) {
+      z.wanderPauseUntil = now + rand(1200, 4200);
+      return;
+    }
+    const options = n.adj.map(e => nav.byId.get(e.to)).filter(m => m && isInZone(m.lat, m.lng));
+    const fallback = n.adj.map(e => nav.byId.get(e.to)).filter(Boolean);
+    const list = options.length ? options : fallback;
+    if (!list.length) return;
+    target = list[Math.floor(Math.random() * list.length)];
+    z.wanderEdge = target.id;
+  }
+  if (!target) return;
+  z.facing = bearing(z.lat, z.lng, target.lat, target.lng);
+  stepToward(z, target.lat, target.lng, stepM * 0.55);
+  if (haversine(z.lat, z.lng, target.lat, target.lng) < 3) {
+    z.wanderEdge = null;
+    z.wanderPauseUntil = now + rand(500, 2400);
+  }
+}
+function zombieCanSense(z, dT, cfg, target) {
+  if (dT <= 18) return true;
+  const sp = target.speed || 0;
+  const noise = sp > 6.5 ? 1.3 : sp > 2 ? 1.1 : sp < 0.5 ? 0.82 : 1;
+  const range = z.visionM * cfg.visionMul * noise;
+  if (dT > range) return false;
+  const dir = bearing(z.lat, z.lng, target.lat, target.lng);
+  const diff = Math.abs(((dir - z.facing + 540) % 360) - 180);
+  return diff <= 72;
+}
+function hordePlayers() {
+  const out = [];
+  if (state.gameActive && state.player) {
+    out.push({
+      id: net.id, self: true, lat: state.player.lat, lng: state.player.lng,
+      speed: state.speedMph,
+      green: greenPoly(state.player.lat, state.player.lng),
+      offNetwork: nearestNodeDistance(state.player.lat, state.player.lng) > 40,
+    });
+  }
+  if (net.connected) {
+    const now = Date.now();
+    for (const r of net.remotes.values()) {
+      if (now - (r.lastSeen || 0) > 12000) continue;
+      if (r.st === 'down') continue;
+      if (!Number.isFinite(r.lat) || !Number.isFinite(r.lng)) continue;
+      out.push({
+        id: r.id, self: false, lat: r.lat, lng: r.lng,
+        speed: Number(r.speed) || 0,
+        green: greenPoly(r.lat, r.lng),
+        offNetwork: nearestNodeDistance(r.lat, r.lng) > 40,
+      });
+    }
+  }
+  return out;
+}
+function nearestHordeTarget(lat, lng, players) {
+  let best = null, bd = Infinity;
+  for (const p of players) {
+    const d = haversine(lat, lng, p.lat, p.lng);
+    if (d < bd) { bd = d; best = p; }
+  }
+  return best;
+}
+function roomHostId() {
+  const ids = [];
+  if (state.gameActive) ids.push(net.id);
+  for (const [id, r] of net.remotes) {
+    if (Date.now() - (r.lastSeen || 0) > 16000) continue;
+    if (r.st === 'down') continue;
+    ids.push(id);
+  }
+  ids.sort();
+  return ids[0] || null;
+}
+function isHordeHost() {
+  if (!net.connected) return true;
+  return roomHostId() === net.id;
+}
+function updateRemoteZombieMotion(dt) {
+  const k = clamp(dt * 3.5, 0.15, 1);
   for (const z of zombies) {
-    const dP = haversine(z.lat, z.lng, p.lat, p.lng);
-    if (dP < nearest) { nearest = dP; nearestZ = z; }
-
-    if (dP <= 7.5) {
-      if (now >= z.attackAt) {
-        z.attackAt = now + 1500;
-        damagePlayer(6 + Math.min(12, state.wave * 1.4));
-      }
-      continue;
+    if (!z.remote) continue;
+    if (Number.isFinite(z.tLat) && Number.isFinite(z.tLng)) {
+      z.lat = lerp(z.lat, z.tLat, k);
+      z.lng = lerp(z.lng, z.tLng, k);
     }
-
-    const step = state.zombieMps * z.speedFactor * dt;
-    const chaseDirect = dP < 24 || (pOffNetwork && dP < 130) || (pGreen && pointInPolygon(z.lat, z.lng, pGreen.pts));
-
-    if (chaseDirect) {
-      stepToward(z, p.lat, p.lng, step);
-    } else {
-      if (now >= z.repathAt || !z.path || z.pathIndex >= z.path.length) {
-        const sn = nearestNode(z.lat, z.lng);
-        const gn = nearestNode(p.lat, p.lng);
-        if (sn && gn) {
-          z.path = findPathCached(sn.id, gn.id) || [];
-          z.pathIndex = 0;
-          z.repathAt = now + rand(3600, 5200);
-        } else {
-          z.path = [];
-        }
-      }
-      if (z.path && z.path.length) followPath(z, step);
-      else greedyStep(z, step);
-    }
-
     z.marker.setLatLng([z.lat, z.lng]);
   }
-
+}
+function updateNearestZombie() {
+  if (!state.player) return;
+  const p = state.player;
+  let nearest = Infinity, nearestZ = null;
+  for (const z of zombies) {
+    const d = haversine(z.lat, z.lng, p.lat, p.lng);
+    if (d < nearest) { nearest = d; nearestZ = z; }
+  }
   state.nearestZombie = nearest;
   state.nearestZombieDir = nearestZ ? bearing(p.lat, p.lng, nearestZ.lat, nearestZ.lng) : 0;
 }
+function updateZombies(dt) {
+  if (!nav.ready || !state.player) return;
+  const now = performance.now();
+  const cfg = currentDifficulty();
 
+  if (!isHordeHost()) {
+    for (const z of zombies) {
+      if (!z.remote) {
+        z.remote = true;
+        z.tLat = z.lat; z.tLng = z.lng;
+        z.lastSync = Date.now();
+      }
+    }
+    updateRemoteZombieMotion(dt);
+    updateNearestZombie();
+    return;
+  }
+
+  for (const z of zombies) {
+    if (z.remote) {
+      z.remote = false;
+      z.type = ZOMBIE_TYPES[z.typeId] || z.type || ZOMBIE_TYPES.walker;
+      z.visionM = z.type.visionM;
+      z.speedMul = z.type.speedMul;
+      z.damageMul = z.type.damageMul;
+      z.path = []; z.pathIndex = 0; z.repathAt = 0;
+    }
+  }
+
+  const players = hordePlayers();
+  const p = state.player;
+
+  for (const z of zombies) {
+    const target = nearestHordeTarget(z.lat, z.lng, players);
+    if (!target) continue;
+    const dT = haversine(z.lat, z.lng, target.lat, target.lng);
+    const sees = zombieCanSense(z, dT, cfg, target);
+    if (sees) {
+      z.alertUntil = now + 8000;
+      if (z.type.id === 'screamer' && now >= z.screamAt) {
+        z.screamAt = now + 12000;
+        alertNearby(z, 130, now);
+        audio.scream();
+        if (haversine(z.lat, z.lng, p.lat, p.lng) < 90) toast('Screamer — the horde heard that', 'warn', 2200);
+      }
+    }
+    const alerted = now < z.alertUntil || dT <= 18;
+    if (alerted !== z.alerted) {
+      z.alerted = alerted;
+      const el = z.marker.getElement();
+      if (el) el.classList.toggle('alert', alerted);
+    }
+    if (dT <= 1.4) continue;
+
+    const step = state.zombieMps * cfg.speedMul * z.speedMul * z.speedFactor * dt;
+    if (alerted) {
+      const chaseDirect = dT < 24 || (target.offNetwork && dT < 130) || (target.green && pointInPolygon(z.lat, z.lng, target.green.pts));
+      if (chaseDirect) {
+        z.facing = bearing(z.lat, z.lng, target.lat, target.lng);
+        stepToward(z, target.lat, target.lng, step);
+      } else {
+        if (now >= z.repathAt || !z.path || z.pathIndex >= z.path.length) {
+          const sn = nearestNode(z.lat, z.lng);
+          const gn = nearestNode(target.lat, target.lng);
+          if (sn && gn) {
+            z.path = findPathCached(sn.id, gn.id) || [];
+            z.pathIndex = 0;
+            z.repathAt = now + rand(3600, 5200);
+          } else z.path = [];
+        }
+        const beforeLat = z.lat, beforeLng = z.lng;
+        if (z.path && z.path.length) followPath(z, step, target);
+        else greedyStep(z, step, target);
+        if (haversine(beforeLat, beforeLng, z.lat, z.lng) > 0.01) z.facing = bearing(beforeLat, beforeLng, z.lat, z.lng);
+      }
+    } else {
+      wanderStep(z, step, now);
+    }
+    z.marker.setLatLng([z.lat, z.lng]);
+  }
+  updateNearestZombie();
+}
+function checkZombieAttacks(now) {
+  if (!state.gameActive || !state.player) return;
+  const p = state.player;
+  const cfg = currentDifficulty();
+  for (const z of zombies) {
+    const range = (z.type && z.type.attackM) || ATTACK_RANGE_DEFAULT_M;
+    if (haversine(z.lat, z.lng, p.lat, p.lng) > range) continue;
+    if (now < (z.attackAt || 0)) continue;
+    z.attackAt = now + 1500;
+    const base = 6 + Math.min(12, state.wave * 1.4);
+    damagePlayer(base * ((z.type && z.type.damageMul) || 1) * cfg.damageMul);
+    if (!state.gameActive) return;
+  }
+}
 function damagePlayer(amount) {
   if (!state.gameActive) return;
   state.hp = Math.max(0, state.hp - amount);
@@ -1880,7 +2457,103 @@ function damagePlayer(amount) {
     toast(`-${Math.round(amount)} HP`, 'bad', 1200);
   }
   updateHUD();
-  if (state.hp <= 0) endGame();
+  if (state.hp <= 0) endGame(false);
+}
+
+/* ---------------- shared horde sync + fallen runners ---------------- */
+let zombieSyncTimer = null;
+function startZombieSync() {
+  clearInterval(zombieSyncTimer);
+  zombieSyncTimer = setInterval(publishZombieSnapshot, 600);
+}
+let spawnerTimer = null;
+function scheduleSpawner() {
+  clearTimeout(spawnerTimer);
+  const cfg = currentDifficulty();
+  const wait = Math.max(1800, cfg.spawnEvery + rand(-900, 1400));
+  spawnerTimer = setTimeout(() => {
+    if (!state.gameActive) return;
+    if (!net.connected || isHordeHost()) spawnZombie();
+    scheduleSpawner();
+  }, wait);
+}
+function publishZombieSnapshot() {
+  if (!state.gameActive || !net.connected || !net.client || !net.room) return;
+  if (!isHordeHost()) return;
+  const list = zombies.map(z => [z.id, (z.type && z.type.id) || 'walker', +z.lat.toFixed(5), +z.lng.toFixed(5), z.alerted ? 1 : 0]);
+  try { net.client.publish(topic(), JSON.stringify({ t: 'z', id: net.id, z: list, ts: Date.now() }), { qos: 0 }); } catch (e) {}
+}
+function applyZombieSnapshot(list) {
+  if (!state.gameActive || !Array.isArray(list)) return;
+  if (isHordeHost()) return;
+  const now = Date.now();
+  const seen = new Set();
+  for (const row of list) {
+    if (!Array.isArray(row) || row.length < 4) continue;
+    const [id, typeId, lat, lng, alert] = row;
+    if (!id || !Number.isFinite(lat) || !Number.isFinite(lng)) continue;
+    seen.add(id);
+    let z = zombies.find(x => x.id === id);
+    if (!z) {
+      const type = ZOMBIE_TYPES[typeId] || ZOMBIE_TYPES.walker;
+      z = addZombieAt({ lat, lng }, type, { id, remote: true });
+      z.playerZombie = id.startsWith('pz_');
+      z.ownerId = z.playerZombie ? id.slice(3) : null;
+    }
+    z.typeId = typeId;
+    z.type = ZOMBIE_TYPES[typeId] || z.type || ZOMBIE_TYPES.walker;
+    z.visionM = z.type.visionM;
+    z.speedMul = z.type.speedMul;
+    z.damageMul = z.type.damageMul;
+    z.tLat = lat; z.tLng = lng; z.lastSync = now; z.remote = true;
+    z.alerted = !!alert;
+    const el = z.marker.getElement();
+    if (el) el.classList.toggle('alert', !!alert);
+  }
+  for (let i = zombies.length - 1; i >= 0; i--) {
+    const z = zombies[i];
+    if (seen.has(z.id)) continue;
+    if (z.remote && now - (z.lastSync || now) < 2600) continue;
+    if (!z.remote && now - (z.lastSync || 0) < 900) continue;
+    map.removeLayer(z.marker);
+    zombies.splice(i, 1);
+  }
+}
+function addPlayerZombie(data) {
+  if (!data || !Number.isFinite(data.lat) || !Number.isFinite(data.lng)) return null;
+  const id = 'pz_' + data.id;
+  if (zombies.some(z => z.id === id)) return null;
+  const z = addZombieAt({ lat: data.lat, lng: data.lng }, ZOMBIE_TYPES.player, {
+    id, ownerId: data.id, playerZombie: true,
+    remote: net.connected && !isHordeHost(),
+  });
+  if (data.name && data.id !== net.id) toast(`${data.name} turned — watch for them`, 'warn', 3000);
+  return z;
+}
+function removePlayerZombie(ownerId) {
+  const id = 'pz_' + ownerId;
+  for (let i = zombies.length - 1; i >= 0; i--) {
+    if (zombies[i].id === id) {
+      if (zombies[i].marker) map.removeLayer(zombies[i].marker);
+      zombies.splice(i, 1);
+    }
+  }
+}
+function publishPlayerZombie() {
+  if (!net.connected || !net.client || !state.player) return;
+  const msg = {
+    t: 'pz', id: net.id, name: state.name || 'Runner',
+    lat: +state.player.lat.toFixed(5), lng: +state.player.lng.toFixed(5), ts: Date.now(),
+  };
+  try { net.client.publish(topic(), JSON.stringify(msg), { qos: 0 }); } catch (e) {}
+}
+function publishRespawn() {
+  if (!net.connected || !net.client) return;
+  try { net.client.publish(topic(), JSON.stringify({ t: 'pzr', id: net.id }), { qos: 0 }); } catch (e) {}
+}
+function announceRespawn() {
+  removePlayerZombie(net.id);
+  publishRespawn();
 }
 
 /* ---------------- simulation movement ---------------- */
@@ -1953,13 +2626,16 @@ function updateHUD() {
   hudSpeed.textContent = state.speedMph.toFixed(1);
   speedFill.style.width = `${clamp(state.speedMph / 12 * 100, 0, 100)}%`;
 
-  objSupplies.textContent = String(state.supplies);
-  objSupplies.nextElementSibling.textContent = ` / ${state.totalSupplies}`;
-  objHorde.textContent = String(zombies.length);
-  objDistance.textContent = fmtMiles(state.distanceM);
-  missionWave.textContent = `WAVE ${state.wave}`;
-  const pct = state.totalSupplies ? (state.supplies / state.totalSupplies) * 100 : 0;
-  objProgress.style.width = `${pct}%`;
+  const m = MISSIONS[state.mission] || MISSIONS.endless;
+  const prog = missionProgress();
+  if (missionValue) missionValue.textContent = prog.text;
+  if (objHorde) objHorde.textContent = String(zombies.length);
+  if (objDistance) objDistance.textContent = fmtMiles(state.distanceM);
+  if (missionWave) missionWave.textContent = `WAVE ${state.wave}`;
+  if (objProgress) objProgress.style.width = `${prog.pct}%`;
+  if (missionChipText) missionChipText.textContent = (state.mission === 'endless' ? 'ENDLESS' : m.short).toUpperCase();
+  if (missionChipIcon) missionChipIcon.className = `fa-solid ${m.icon}`;
+  if (missionChip) missionChip.title = `${m.name} — ${prog.text}`;
   updateThreat();
 }
 
@@ -1971,6 +2647,7 @@ function clearWorld() {
   zombies.length = 0;
   waypoints.forEach(w => { if (w.marker) map.removeLayer(w.marker); });
   waypoints = [];
+  clearBeacon();
   pathCache.clear();
   threatBanner.classList.add('hidden');
   audio.stopSiren();
@@ -2002,6 +2679,10 @@ function startGame() {
   state.speedMph = 0;
   state.wave = 1;
   state.elapsed = 0;
+  state.collectedTotal = 0;
+  state.missionComplete = false;
+  state.missionStarted = false;
+  state.missionStartDist = 0;
   state.nearestZombie = Infinity;
   state.startedAt = Date.now();
   state.lastTick = performance.now();
@@ -2024,45 +2705,59 @@ function startGame() {
   updateHUD();
   loadNavigation();
   connectRoom();
+  announceRespawn();
   startPublishLoop();
+  startZombieSync();
+  scheduleSpawner();
   toast('Run started — keep moving', 'good', 2200);
   setTimeout(() => { if (state.gameActive) toast('Collect caches · avoid the horde', 'info', 2600); }, 2600);
 }
 
-function endGame() {
+function endGame(win = false) {
   if (!state.gameActive) return;
+  const m = MISSIONS[state.mission] || MISSIONS.endless;
+  const won = !!win || state.missionComplete;
   state.gameActive = false;
   state.speedMph = 0;
   stopGps();
   releaseWakeLock();
   audio.stopSiren();
-  audio.over();
+  if (!won) audio.over();
   threatBanner.classList.add('hidden');
   $('#joystick').classList.add('hidden');
   $('#sim-hint').classList.add('hidden');
   publishFinalState();
+  if (!won) publishPlayerZombie();
+  clearTimeout(spawnerTimer);
+  clearBeacon();
 
   const result = saveLocalScore();
   const isBest = result.isBest;
   $('#new-best').classList.toggle('hidden', !isBest);
-  $('#end-icon').className = 'end-icon';
-  $('#end-icon').innerHTML = '<i class="fa-solid fa-skull"></i>';
-  $('#end-title').className = '';
-  $('#end-title').textContent = 'You Were Overrun';
-  $('#end-subtitle').textContent = 'The horde caught you in the street. Supplies kept you going, but not far enough.';
+  $('#end-icon').className = 'end-icon' + (won ? ' win' : '');
+  $('#end-icon').innerHTML = won ? '<i class="fa-solid fa-helicopter"></i>' : '<i class="fa-solid fa-skull"></i>';
+  $('#end-title').className = won ? 'win' : '';
+  $('#end-title').textContent = won ? 'Mission Complete' : 'You Were Overrun';
+  $('#end-subtitle').textContent = won
+    ? (m.winText || 'You made it out alive.')
+    : 'The horde caught you in the street. Supplies kept you going, but not far enough.';
   $('#end-score').textContent = Math.round(state.score).toLocaleString();
   $('#end-distance').textContent = fmtMiles(state.distanceM);
   $('#end-supplies').textContent = String(state.supplies);
   $('#end-time').textContent = fmtTime(state.elapsed);
   $('#end-wave').textContent = String(state.wave);
   $('#end-best').textContent = Math.round(result.best).toLocaleString();
+  const missionEl = $('#end-mission');
+  if (missionEl) missionEl.textContent = `${m.name} · ${won ? 'complete' : 'failed'}`;
   updateHUD();
+  updateFov();
   gameOverModal.classList.add('open');
   renderScoreboard();
 }
 
 function resetRun(showSetup) {
   state.gameActive = false;
+  clearTimeout(spawnerTimer);
   stopGps();
   releaseWakeLock();
   clearWorld();
@@ -2078,6 +2773,10 @@ function resetRun(showSetup) {
   state.score = 0;
   state.supplies = 0;
   state.totalSupplies = 0;
+  state.collectedTotal = 0;
+  state.missionComplete = false;
+  state.missionStarted = false;
+  state.missionStartDist = 0;
   state.distanceM = 0;
   state.distanceScorePool = 0;
   state.speedMph = 0;
@@ -2092,6 +2791,7 @@ function resetRun(showSetup) {
   nav.loading = false;
   nav.token++;
   updateHUD();
+  updateFov();
   if (showSetup) {
     setupModal.classList.add('open');
     updateStartState();
@@ -2115,6 +2815,8 @@ function saveLocalScore() {
     dist: +(state.distanceM / M_PER_MI).toFixed(2),
     sup: state.supplies,
     wave: state.wave,
+    mission: state.mission,
+    diff: state.difficulty,
     mode: state.simulation ? 'sim' : 'gps',
     date: Date.now(),
   };
@@ -2136,6 +2838,9 @@ function loop() {
 
   if (state.simulation) applySimMovement(dt);
   updateZombies(dt);
+  updateFov();
+  checkZombieAttacks(now);
+  checkMission();
   updateSquad();
   if (state.squadLinked) state.score += 2 * dt;
   updateHUD();
@@ -2240,6 +2945,7 @@ function connectRoom() {
       client.subscribe(topic(), { qos: 0 });
       setRoomStatus('live');
       publishState();
+      if (state.gameActive) announceRespawn();
       renderScoreboard();
     });
     client.on('error', () => { if (!settled) failover(); });
@@ -2270,8 +2976,25 @@ function clearRemotes() {
 function onNetMessage(topicName, payload) {
   let m;
   try { m = JSON.parse(payload.toString()); } catch (e) { return; }
-  if (!m || m.id === net.id) return;
+  if (!m) return;
+  if (m.t === 'z') {
+    if (m.id === net.id || isHordeHost()) return;
+    applyZombieSnapshot(m.z);
+    return;
+  }
+  if (m.t === 'pz') {
+    if (m.id === net.id) return;
+    addPlayerZombie(m);
+    return;
+  }
+  if (m.t === 'pzr') {
+    if (m.id === net.id) return;
+    removePlayerZombie(m.id);
+    return;
+  }
+  if (m.id === net.id) return;
   if (m.t === 'leave') {
+    removePlayerZombie(m.id);
     const r = net.remotes.get(m.id);
     if (r) { if (r.marker) map.removeLayer(r.marker); net.remotes.delete(m.id); renderScoreboard(); }
     return;
@@ -2322,6 +3045,7 @@ function publishState(final = false) {
     hp: Math.round(state.hp), score: Math.round(state.score),
     dist: +(state.distanceM / M_PER_MI).toFixed(2), sup: state.supplies,
     wave: state.wave, speed: +state.speedMph.toFixed(1),
+    mission: state.mission, diff: state.difficulty,
     st: final ? 'down' : (state.gameActive ? 'run' : 'idle'), ts: Date.now(),
   };
   try { net.client.publish(topic(), JSON.stringify(msg), { qos: 0 }); } catch (e) {}
@@ -2336,6 +3060,10 @@ function startPublishLoop() {
 /* ============================================================
    SCOREBOARD
    ============================================================ */
+function missionLabel(key) {
+  const m = MISSIONS[key];
+  return m ? (m.tag || m.short) : 'Endless';
+}
 function renderScoreboard() {
   if (!scoreList) return;
   if (state.activeTab === 'local') {
@@ -2349,7 +3077,7 @@ function renderScoreboard() {
         <span class="rank">${i + 1}</span>
         <div class="who">
           <div class="nm">${escapeHtml(s.name || 'Runner')}</div>
-          <div class="sub">${(Number(s.dist) || 0).toFixed(2)} mi · wave ${Number(s.wave) || 1} · ${new Date(s.date).toLocaleDateString()}</div>
+          <div class="sub">${(Number(s.dist) || 0).toFixed(2)} mi · wave ${Number(s.wave) || 1} · ${missionLabel(s.mission)} · ${new Date(s.date).toLocaleDateString()}</div>
         </div>
         <span class="pts">${Math.round(Number(s.score) || 0).toLocaleString()}</span>
       </li>`).join('');
@@ -2360,6 +3088,7 @@ function renderScoreboard() {
   entries.push({
     id: 'me', name: state.name || 'You', score: Math.round(state.score),
     dist: state.distanceM / M_PER_MI, wave: state.wave,
+    mission: state.mission, diff: state.difficulty,
     st: state.gameActive ? 'run' : 'idle', me: true,
   });
   for (const r of net.remotes.values()) {
@@ -2367,6 +3096,7 @@ function renderScoreboard() {
     entries.push({
       id: r.id, name: r.name || 'Runner', score: Number(r.score) || 0,
       dist: Number(r.dist) || 0, wave: Number(r.wave) || 1,
+      mission: r.mission || 'endless', diff: r.diff || 'normal',
       st: r.st || 'run', me: false,
     });
   }
@@ -2376,7 +3106,7 @@ function renderScoreboard() {
       <span class="rank">${i + 1}</span>
       <div class="who">
         <div class="nm">${escapeHtml(e.name)}${e.me ? '<span class="you">YOU</span>' : ''}</div>
-        <div class="sub">${e.dist.toFixed(2)} mi · wave ${e.wave}${e.st === 'down' ? ' · down' : ''}</div>
+        <div class="sub">${e.dist.toFixed(2)} mi · wave ${e.wave} · ${missionLabel(e.mission)}${e.st === 'down' ? ' · down' : ''}</div>
       </div>
       <span class="pts">${Math.round(e.score).toLocaleString()}</span>
     </li>`).join('');
@@ -2503,6 +3233,20 @@ function bindUI() {
     syncPaceUI();
   }));
 
+  $$('.diff').forEach(b => b.addEventListener('click', () => {
+    if (!DIFFICULTIES[b.dataset.diff]) return;
+    state.difficulty = b.dataset.diff;
+    syncDifficultyUI();
+    savePrefs();
+  }));
+
+  $$('.mission').forEach(b => b.addEventListener('click', () => {
+    if (!MISSIONS[b.dataset.mission]) return;
+    state.mission = b.dataset.mission;
+    syncMissionUI();
+    savePrefs();
+  }));
+
   nameInput.addEventListener('input', () => { state.name = sanitizeName(nameInput.value); });
   roomInput.addEventListener('input', () => {
     state.room = sanitizeRoom(roomInput.value);
@@ -2592,7 +3336,9 @@ function copyInvite() {
 }
 
 function shareRun() {
-  const text = `I scored ${Math.round(state.score).toLocaleString()} pts running ${fmtMiles(state.distanceM)} in Z-Run // Outbreak Protocol — wave ${state.wave}. Think you can outrun the horde?`;
+  const m = MISSIONS[state.mission] || MISSIONS.endless;
+  const d = currentDifficulty();
+  const text = `I scored ${Math.round(state.score).toLocaleString()} pts running ${fmtMiles(state.distanceM)} in Z-Run // Outbreak Protocol — ${m.name} on ${d.name}, wave ${state.wave}. Think you can outrun the horde?`;
   const url = location.href.split('?')[0];
   if (navigator.share) {
     navigator.share({ title: 'Z-Run // Outbreak Protocol', text, url }).catch(() => {});
@@ -2614,6 +3360,7 @@ function init() {
   bindUI();
   loadPrefs();
   initJoystick();
+  renderZombieGuide();
   updateHUD();
   updateStartState();
   renderScoreboard();
@@ -2621,7 +3368,6 @@ function init() {
   if (new URLSearchParams(location.search).get('room')) connectRoom();
 
   setInterval(loop, 200);
-  setInterval(() => { if (state.gameActive) spawnZombie(); }, 6500);
   setInterval(pruneRemotes, 5000);
 
   if (navigator.geolocation) {
