@@ -266,6 +266,9 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 .preset{flex:1;padding:4px 2px;border-radius:6px;font-family:var(--mono);font-size:9px;color:var(--dim);border:1px solid var(--line);background:rgba(255,255,255,.03)}
 .preset:hover{color:var(--text);border-color:var(--line-2)}
 .preset.active{color:var(--cyan);border-color:rgba(79,227,255,.4);background:rgba(79,227,255,.08)}
+.reach-preset{flex:1;padding:4px 2px;border-radius:6px;font-family:var(--mono);font-size:9px;color:var(--dim);border:1px solid var(--line);background:rgba(255,255,255,.03)}
+.reach-preset:hover{color:var(--text);border-color:var(--line-2)}
+.reach-preset.active{color:var(--red);border-color:rgba(255,77,94,.45);background:rgba(255,77,94,.09)}
 .pace{display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px;border-radius:9px;border:1px solid var(--line);background:rgba(255,255,255,.03);transition:.15s}
 .pace i{font-size:13px;color:var(--dim);transition:.15s}
 .pace .nm{font-size:10.5px;font-weight:600;letter-spacing:.04em}
@@ -289,6 +292,18 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 .mission.active .sp{color:#9befff}
 .setup-note{margin:9px 0 0;font-size:9px;line-height:1.45;color:var(--dim)}
 .setup-note b{color:var(--muted);font-weight:600}
+.vision-toggle{display:flex;align-items:center;gap:9px;width:100%;margin-top:8px;padding:9px 10px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.03);text-align:left;transition:.15s}
+.vision-toggle:hover{border-color:var(--line-2);background:rgba(255,255,255,.06)}
+.vision-toggle .vt-icon{width:26px;height:26px;flex:0 0 26px;border-radius:7px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.06);border:1px solid var(--line-2);color:var(--dim);font-size:11px;transition:.15s}
+.vision-toggle .vt-text{display:flex;flex-direction:column;gap:1px;min-width:0}
+.vision-toggle .vt-name{font-size:10.5px;font-weight:600;color:var(--muted);transition:.15s}
+.vision-toggle .vt-sub{font-size:8.5px;color:var(--dim);line-height:1.3}
+.vision-toggle .vt-switch{position:relative;margin-left:auto;flex:0 0 34px;width:34px;height:19px;border-radius:99px;background:rgba(255,255,255,.1);border:1px solid var(--line-2);transition:.18s}
+.vision-toggle .vt-switch::after{content:'';position:absolute;left:2px;top:2px;width:13px;height:13px;border-radius:50%;background:#8fa3b0;transition:.18s}
+.vision-toggle.on .vt-icon{background:rgba(109,255,168,.16);border-color:rgba(109,255,168,.35);color:var(--green);box-shadow:0 0 14px rgba(109,255,168,.15)}
+.vision-toggle.on .vt-name{color:var(--text)}
+.vision-toggle.on .vt-switch{background:rgba(109,255,168,.25);border-color:rgba(109,255,168,.5)}
+.vision-toggle.on .vt-switch::after{left:17px;background:#d9fff0;box-shadow:0 0 8px rgba(109,255,168,.8)}
 .setup-foot{display:flex;align-items:center;gap:12px;padding:0 20px 20px}
 #setup-status{flex:1;font-size:10px;line-height:1.4;color:var(--dim);min-width:0}
 #setup-status.ok{color:var(--green)}
@@ -336,15 +351,19 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 .vertex-dot{width:12px;height:12px;border-radius:50%;background:#0a1418;border:2px solid var(--cyan);box-shadow:0 0 8px rgba(79,227,255,.6)}
 
 /* marker styles */
-.player-marker{display:flex;align-items:center;justify-content:center;position:relative}
+.player-marker{display:flex;align-items:center;justify-content:center;position:absolute}
 .player-core{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 32% 28%,#c9ffe1,#6dffa8 48%,#12a35a);border:2px solid rgba(255,255,255,.92);color:#03150b;font-size:14px;box-shadow:0 0 0 4px rgba(109,255,168,.16),0 0 26px rgba(109,255,168,.55);position:relative;z-index:2}
 .player-pulse{position:absolute;width:34px;height:34px;border-radius:50%;border:2px solid rgba(109,255,168,.7);animation:playerPulse 2s infinite ease-out}
+.player-bearing{position:absolute;inset:0;z-index:3;pointer-events:none;transform:rotate(0deg);transform-origin:center;will-change:transform}
+.player-bearing::before{content:'';position:absolute;left:50%;top:-15px;transform:translateX(-50%);width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:14px solid #eafff2;filter:drop-shadow(0 0 6px rgba(109,255,168,.95))}
+.player-bearing::after{content:'';position:absolute;left:50%;top:-21px;transform:translateX(-50%);width:5px;height:5px;border-radius:50%;background:#eafff2;box-shadow:0 0 9px rgba(109,255,168,.95)}
+.player-marker.vision-off .player-bearing{display:none}
 @keyframes playerPulse{0%{transform:scale(1);opacity:.8}100%{transform:scale(2.8);opacity:0}}
 .home-marker{display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:8px;background:rgba(8,14,20,.9);border:1px solid rgba(79,227,255,.5);color:var(--cyan);font-size:11px;box-shadow:0 0 14px rgba(79,227,255,.25)}
-.extract-marker{display:flex;align-items:center;justify-content:center;position:relative;width:42px;height:42px}
+.extract-marker{display:flex;align-items:center;justify-content:center;position:absolute;width:42px;height:42px}
 .extract-core{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 32% 28%,#d9fff0,#6dffa8 50%,#12a35a);border:2px solid rgba(255,255,255,.92);color:#03150b;font-size:14px;box-shadow:0 0 0 4px rgba(109,255,168,.16),0 0 28px rgba(109,255,168,.6);position:relative;z-index:2}
 .extract-pulse{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(109,255,168,.75);animation:playerPulse 1.6s infinite ease-out}
-.zombie-marker{--zc:#ff4d5e;--zs:30px;display:flex;align-items:center;justify-content:center;position:relative}
+.zombie-marker{--zc:#ff4d5e;--zs:30px;display:flex;align-items:center;justify-content:center;position:absolute}
 .zombie-core{width:var(--zs);height:var(--zs);border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--zc) 38%,#1a0306),#160307 72%);border:2px solid var(--zc);color:var(--zc);font-size:calc(var(--zs) * .4);box-shadow:0 0 18px color-mix(in srgb,var(--zc) 45%,transparent),inset 0 0 10px color-mix(in srgb,var(--zc) 20%,transparent);position:relative;z-index:2}
 .zombie-ring{position:absolute;width:var(--zs);height:var(--zs);border-radius:50%;border:1.5px solid color-mix(in srgb,var(--zc) 80%,transparent);animation:zombiePulse 1.3s infinite ease-out}
 .zombie-marker.alert .zombie-core{box-shadow:0 0 28px var(--zc),inset 0 0 12px color-mix(in srgb,var(--zc) 35%,transparent);animation:zombieAlert .5s infinite alternate}
@@ -354,9 +373,9 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 .supply-marker{display:flex;align-items:center;justify-content:center}
 .supply-core{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;background:rgba(8,16,22,.95);border:1px solid var(--c,#4fe3ff);color:var(--c,#4fe3ff);font-size:12px;box-shadow:0 0 16px color-mix(in srgb,var(--c,#4fe3ff) 40%,transparent);animation:supplyFloat 2.4s ease-in-out infinite}
 @keyframes supplyFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
-.remote-marker{display:flex;align-items:center;gap:5px;transform:translate(-50%,-50%);position:relative}
-.remote-dot{width:13px;height:13px;border-radius:50%;background:var(--c,#b18cff);border:2px solid rgba(255,255,255,.85);box-shadow:0 0 12px var(--c,#b18cff);flex:0 0 13px}
-.remote-name{font-family:var(--ui);font-size:9px;font-weight:600;color:#fff;background:rgba(6,10,14,.8);border:1px solid rgba(255,255,255,.14);padding:1px 5px;border-radius:4px;white-space:nowrap;max-width:96px;overflow:hidden;text-overflow:ellipsis}
+.remote-marker{position:absolute;left:50%;top:50%;width:0;height:0}
+.remote-dot{position:absolute;left:-6.5px;top:-6.5px;width:13px;height:13px;border-radius:50%;background:var(--c,#b18cff);border:2px solid rgba(255,255,255,.85);box-shadow:0 0 12px var(--c,#b18cff)}
+.remote-name{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-family:var(--ui);font-size:9px;font-weight:600;color:#fff;background:rgba(6,10,14,.8);border:1px solid rgba(255,255,255,.14);padding:1px 5px;border-radius:4px;white-space:nowrap;max-width:96px;overflow:hidden;text-overflow:ellipsis}
 .remote-marker.down{opacity:.45;filter:grayscale(1)}
 .zone-flag{display:flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:rgba(79,227,255,.15);border:1px solid var(--cyan);color:var(--cyan);font-size:8px}
 
@@ -466,6 +485,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
     <button id="btn-recenter" class="icon-btn hide-sm" title="Recenter map" type="button"><i class="fa-solid fa-crosshairs"></i></button>
     <button id="btn-leaderboard" class="icon-btn" title="Leaderboard" type="button"><i class="fa-solid fa-ranking-star"></i></button>
     <button id="btn-audio" class="icon-btn" title="Toggle audio" type="button"><i id="audio-icon" class="fa-solid fa-volume-high"></i></button>
+    <button id="btn-vision" class="icon-btn on" title="Toggle vision cone &amp; heading" aria-pressed="true" type="button"><i class="fa-solid fa-eye"></i></button>
     <button id="btn-sim" class="icon-btn" title="Toggle simulation mode" type="button"><i class="fa-solid fa-gamepad"></i></button>
     <button id="btn-menu" class="icon-btn" title="Scores" type="button" style="display:none"><i class="fa-solid fa-bars"></i></button>
   </div>
@@ -650,8 +670,20 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
         <p style="margin:9px 0 0;font-size:9px;line-height:1.45;color:var(--dim)">Infected travel roads, paths, parks and fields — never through houses or private property.</p>
       </section>
 
+      <section class="step">
+        <div class="step-head"><span class="step-num">04</span><h4>Zombie Reach</h4><span id="reach-status" class="step-status">7.0 ft</span></div>
+        <div class="zone-read"><span id="reach-value" class="big" style="color:var(--red)">7.0 ft</span><span id="reach-sub" class="sub">5.2–7.9 ft by type</span></div>
+        <input id="reach-range" type="range" min="3" max="12" step="0.5" value="7" aria-label="Zombie strike reach in feet">
+        <div class="presets">
+          <button class="reach-preset" data-reach="4" type="button">4 ft</button>
+          <button class="reach-preset active" data-reach="7" type="button">7 ft</button>
+          <button class="reach-preset" data-reach="10" type="button">10 ft</button>
+        </div>
+        <p class="setup-note">How close a zombie must get before it can strike. Type differences still apply.</p>
+      </section>
+
       <section class="step wide">
-        <div class="step-head"><span class="step-num">04</span><h4>Difficulty</h4><span id="difficulty-status" class="step-status">standard</span></div>
+        <div class="step-head"><span class="step-num">05</span><h4>Difficulty</h4><span id="difficulty-status" class="step-status">standard</span></div>
         <div class="diff-grid">
           <button class="diff" data-diff="easy" style="--dc:#6dffa8" type="button"><i class="fa-solid fa-leaf"></i><span class="nm">Easy</span><span class="sp">Sparse horde</span></button>
           <button class="diff active" data-diff="normal" style="--dc:#4fe3ff" type="button"><i class="fa-solid fa-shield-halved"></i><span class="nm">Standard</span><span class="sp">Balanced</span></button>
@@ -662,7 +694,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
       </section>
 
       <section class="step wide">
-        <div class="step-head"><span class="step-num">05</span><h4>Mission</h4><span id="mission-status" class="step-status">endless</span></div>
+        <div class="step-head"><span class="step-num">06</span><h4>Mission</h4><span id="mission-status" class="step-status">endless</span></div>
         <div class="mission-grid">
           <button class="mission active" data-mission="endless" type="button"><i class="fa-solid fa-infinity"></i><span class="nm">Endless</span><span class="sp">Score run</span></button>
           <button class="mission" data-mission="survive" type="button"><i class="fa-solid fa-hourglass-half"></i><span class="nm">Survive</span><span class="sp">5:00</span></button>
@@ -674,11 +706,16 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
       </section>
 
       <section class="step">
-        <div class="step-head"><span class="step-num">06</span><h4>Callsign &amp; Room</h4><span class="step-status">optional</span></div>
+        <div class="step-head"><span class="step-num">07</span><h4>Callsign &amp; Room</h4><span class="step-status">optional</span></div>
         <div style="display:flex;flex-direction:column;gap:6px">
           <input id="name-input" class="input" placeholder="Callsign" maxlength="16" autocomplete="off" spellcheck="false">
           <input id="room-input" class="input" placeholder="Room code (join friends)" maxlength="10" autocomplete="off" spellcheck="false">
         </div>
+        <button id="toggle-vision" class="vision-toggle on" type="button" aria-pressed="true">
+          <span class="vt-icon"><i class="fa-solid fa-eye"></i></span>
+          <span class="vt-text"><span class="vt-name">Vision cone &amp; heading</span><span class="vt-sub">Show your look direction on the map</span></span>
+          <span class="vt-switch" aria-hidden="true"></span>
+        </button>
         <p style="margin:8px 0 0;font-size:9px;line-height:1.45;color:var(--dim)">Share a code to see the same horde, squadmates live, and compete on the room leaderboard. Leave blank for a solo run.</p>
       </section>
     </div>
@@ -869,6 +906,11 @@ const ZOMBIE_TYPES = {
 };
 const ZOMBIE_ORDER = ['crawler', 'walker', 'brute', 'runner', 'screamer', 'stalker', 'player'];
 const ATTACK_RANGE_DEFAULT_M = 2.1; // ~7 ft
+const REACH_BASE_FT = 7; // default reach setting; type attackM values scale around this
+function zombieReachScale() {
+  const ft = Number(state.zombieReachFt);
+  return (Number.isFinite(ft) && ft > 0 ? ft : REACH_BASE_FT) / REACH_BASE_FT;
+}
 
 /* ---------------- state ---------------- */
 const state = {
@@ -884,6 +926,8 @@ const state = {
   zone: null,
   zombieMph: 5.5,
   zombieMps: 5.5 * MPS_PER_MPH,
+  zombieReachFt: 7,
+  showVision: true,
   difficulty: 'normal',
   mission: 'endless',
   collectedTotal: 0,
@@ -1078,40 +1122,71 @@ function recenterMap(zoom) {
   map.setView([state.player.lat, state.player.lng], zoom || Math.max(map.getZoom(), 16), { animate: true });
 }
 
-/* ---------------- player sight cone ---------------- */
-const fov = { layers: [], rangeM: 66, halfAngle: 50 * Math.PI / 180, specs: [1, 0.66, 0.33] };
+/* ---------------- player sight cone & heading ---------------- */
+const fov = { layers: [], edge: null, center: null, rangeM: 56, halfAngle: 36 * Math.PI / 180, specs: [1, 0.62, 0.32] };
 function ensureFov() {
   if (!map || fov.layers.length) return;
   const style = [
-    { scale: 1, opacity: 0.05, line: 0.32 },
-    { scale: 0.66, opacity: 0.06, line: 0.16 },
-    { scale: 0.33, opacity: 0.075, line: 0 },
+    { opacity: 0.075, line: 0.35 },
+    { opacity: 0.09, line: 0.18 },
+    { opacity: 0.11, line: 0 },
   ];
   fov.layers = style.map(s => L.polygon([], {
     color: '#b8ffd0', weight: 1, opacity: s.line,
     fillColor: '#eaffd8', fillOpacity: s.opacity,
     interactive: false, smoothFactor: 1,
   }).addTo(map));
+  fov.edge = L.polygon([], {
+    color: '#d9ffe8', weight: 1.6, opacity: 0.68, fill: false,
+    interactive: false, smoothFactor: 1,
+  }).addTo(map);
+  fov.center = L.polyline([], {
+    color: '#f4fff8', weight: 1.2, opacity: 0.45, dashArray: '3 7',
+    interactive: false, smoothFactor: 1,
+  }).addTo(map);
+}
+function clearFov() {
+  fov.layers.forEach(l => { try { l.setLatLngs([]); } catch (e) {} });
+  if (fov.edge) { try { fov.edge.setLatLngs([]); } catch (e) {} }
+  if (fov.center) { try { fov.center.setLatLngs([]); } catch (e) {} }
+}
+function updatePlayerHeading() {
+  if (!state.playerMarker) return;
+  const el = state.playerMarker.getElement();
+  if (!el) return;
+  const h = Number.isFinite(state.heading) ? state.heading : 0;
+  const bearing = el.querySelector('.player-bearing');
+  if (bearing) bearing.style.transform = `rotate(${h.toFixed(1)}deg)`;
+  el.classList.toggle('vision-off', state.showVision === false);
 }
 function updateFov() {
   if (!map) return;
-  if (!state.gameActive || !state.player) {
-    fov.layers.forEach(l => { try { l.setLatLngs([]); } catch (e) {} });
+  updatePlayerHeading();
+  if (!state.gameActive || !state.player || state.showVision === false) {
+    clearFov();
     return;
   }
   ensureFov();
   const heading = Number.isFinite(state.heading) ? state.heading : 0;
   const halfDeg = fov.halfAngle * 180 / Math.PI;
-  const steps = 12;
+  const steps = 16;
+  const apex = [state.player.lat, state.player.lng];
+  const arc = [];
+  for (let i = 0; i <= steps; i++) {
+    const a = heading - halfDeg + (i / steps) * halfDeg * 2;
+    arc.push(destPoint(state.player.lat, state.player.lng, fov.rangeM, a));
+  }
   fov.layers.forEach((layer, idx) => {
     const scale = fov.specs[idx] || 1;
-    const pts = [[state.player.lat, state.player.lng]];
+    const pts = [apex];
     for (let i = 0; i <= steps; i++) {
       const a = heading - halfDeg + (i / steps) * halfDeg * 2;
       pts.push(destPoint(state.player.lat, state.player.lng, fov.rangeM * scale, a));
     }
     layer.setLatLngs(pts);
   });
+  if (fov.edge) fov.edge.setLatLngs([apex, ...arc]);
+  if (fov.center) fov.center.setLatLngs([apex, destPoint(state.player.lat, state.player.lng, fov.rangeM, heading)]);
 }
 
 /* ---------------- toasts ---------------- */
@@ -1138,8 +1213,10 @@ function loadPrefs() {
   state.room = prefs.room || '';
   state.radiusMi = clamp(parseFloat(prefs.radiusMi) || 0.5, 0.15, 1.5);
   state.zombieMph = [3.5, 5.5, 7.5].includes(parseFloat(prefs.zombieMph)) ? parseFloat(prefs.zombieMph) : 5.5;
+  state.zombieReachFt = clamp(parseFloat(prefs.zombieReachFt) || REACH_BASE_FT, 3, 12);
   state.difficulty = DIFFICULTIES[prefs.difficulty] ? prefs.difficulty : 'normal';
   state.mission = MISSIONS[prefs.mission] ? prefs.mission : 'endless';
+  state.showVision = prefs.showVision !== false;
   state.muted = !!prefs.muted;
   nameInput.value = state.name;
   roomInput.value = state.room;
@@ -1147,8 +1224,10 @@ function loadPrefs() {
   radiusRange.value = state.radiusMi;
   syncRadiusUI();
   syncPaceUI();
+  syncReachUI();
   syncDifficultyUI();
   syncMissionUI();
+  syncVisionUI();
   audio.setMuted(state.muted);
   audioIcon.className = state.muted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
   $('#btn-audio').classList.toggle('on', !state.muted);
@@ -1167,8 +1246,9 @@ function savePrefs() {
   try {
     localStorage.setItem('zrun.prefs.v2', JSON.stringify({
       name: state.name, room: state.room, radiusMi: state.radiusMi,
-      zombieMph: state.zombieMph, difficulty: state.difficulty, mission: state.mission,
-      muted: state.muted,
+      zombieMph: state.zombieMph, zombieReachFt: state.zombieReachFt,
+      difficulty: state.difficulty, mission: state.mission,
+      showVision: state.showVision !== false, muted: state.muted,
     }));
   } catch (e) {}
 }
@@ -1186,6 +1266,23 @@ function syncPaceUI() {
   $$('.pace').forEach(b => b.classList.toggle('active', Math.abs(parseFloat(b.dataset.mph) - state.zombieMph) < 0.01));
   const p = $$('.pace').find(b => Math.abs(parseFloat(b.dataset.mph) - state.zombieMph) < 0.01);
   $('#pace-status').textContent = p ? p.querySelector('.nm').textContent.toLowerCase() : 'custom';
+}
+function syncReachUI() {
+  const ft = clamp(Number(state.zombieReachFt) || REACH_BASE_FT, 3, 12);
+  state.zombieReachFt = ft;
+  const range = $('#reach-range');
+  if (range) range.value = ft;
+  const value = $('#reach-value');
+  if (value) value.textContent = `${ft.toFixed(1)} ft`;
+  const status = $('#reach-status');
+  if (status) status.textContent = `${ft.toFixed(1)} ft`;
+  $$('.reach-preset').forEach(b => b.classList.toggle('active', Math.abs(parseFloat(b.dataset.reach) - ft) < 0.01));
+  const sub = $('#reach-sub');
+  if (sub) {
+    const scale = ft / REACH_BASE_FT;
+    const vals = ZOMBIE_ORDER.map(k => ZOMBIE_TYPES[k].attackM * scale / M_PER_FT);
+    sub.textContent = `${Math.min(...vals).toFixed(1)}–${Math.max(...vals).toFixed(1)} ft by type`;
+  }
 }
 function syncDifficultyUI() {
   $$('.diff').forEach(b => b.classList.toggle('active', b.dataset.diff === state.difficulty));
@@ -1205,6 +1302,30 @@ function syncMissionUI() {
     missionIcon.className = `obj-icon ${m.tone}`;
     missionIcon.innerHTML = `<i class="fa-solid ${m.icon}"></i>`;
   }
+}
+function syncVisionUI() {
+  const on = state.showVision !== false;
+  const btn = $('#btn-vision');
+  if (btn) {
+    btn.classList.toggle('on', on);
+    btn.setAttribute('aria-pressed', String(on));
+    const icon = btn.querySelector('i');
+    if (icon) icon.className = on ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';
+  }
+  const toggle = $('#toggle-vision');
+  if (toggle) {
+    toggle.classList.toggle('on', on);
+    toggle.setAttribute('aria-pressed', String(on));
+    const icon = toggle.querySelector('.vt-icon i');
+    if (icon) icon.className = on ? 'fa-solid fa-eye' : 'fa-solid fa-eye-slash';
+  }
+}
+function setVision(on, announce) {
+  state.showVision = !!on;
+  syncVisionUI();
+  updateFov();
+  savePrefs();
+  if (announce) toast(state.showVision ? 'Vision cone & heading on' : 'Vision cone & heading off', 'info', 1700);
 }
 function renderZombieGuide() {
   const el = $('#zguide');
@@ -1494,7 +1615,7 @@ function createPlayerMarker(lat, lng) {
   if (state.playerMarker) map.removeLayer(state.playerMarker);
   const icon = L.divIcon({
     className: 'player-marker',
-    html: '<div class="player-pulse"></div><div class="player-core"><i class="fa-solid fa-person-running"></i></div>',
+    html: '<div class="player-bearing"></div><div class="player-pulse"></div><div class="player-core"><i class="fa-solid fa-person-running"></i></div>',
     iconSize: [34, 34], iconAnchor: [17, 17],
   });
   state.playerMarker = L.marker([lat, lng], { icon, zIndexOffset: 1000, interactive: false }).addTo(map);
@@ -2437,7 +2558,7 @@ function checkZombieAttacks(now) {
   const p = state.player;
   const cfg = currentDifficulty();
   for (const z of zombies) {
-    const range = (z.type && z.type.attackM) || ATTACK_RANGE_DEFAULT_M;
+    const range = ((z.type && z.type.attackM) || ATTACK_RANGE_DEFAULT_M) * zombieReachScale();
     if (haversine(z.lat, z.lng, p.lat, p.lng) > range) continue;
     if (now < (z.attackAt || 0)) continue;
     z.attackAt = now + 1500;
@@ -3233,6 +3354,20 @@ function bindUI() {
     syncPaceUI();
   }));
 
+  const reachRange = $('#reach-range');
+  if (reachRange) {
+    reachRange.addEventListener('input', () => {
+      state.zombieReachFt = clamp(parseFloat(reachRange.value) || REACH_BASE_FT, 3, 12);
+      syncReachUI();
+    });
+    reachRange.addEventListener('change', savePrefs);
+  }
+  $$('.reach-preset').forEach(b => b.addEventListener('click', () => {
+    state.zombieReachFt = clamp(parseFloat(b.dataset.reach) || REACH_BASE_FT, 3, 12);
+    syncReachUI();
+    savePrefs();
+  }));
+
   $$('.diff').forEach(b => b.addEventListener('click', () => {
     if (!DIFFICULTIES[b.dataset.diff]) return;
     state.difficulty = b.dataset.diff;
@@ -3266,6 +3401,14 @@ function bindUI() {
     audioIcon.className = state.muted ? 'fa-solid fa-volume-xmark' : 'fa-solid fa-volume-high';
     $('#btn-audio').classList.toggle('on', !state.muted);
     savePrefs();
+  });
+  $('#btn-vision').addEventListener('click', () => {
+    audio.init();
+    setVision(state.showVision === false, true);
+  });
+  $('#toggle-vision').addEventListener('click', () => {
+    audio.init();
+    setVision(state.showVision === false, true);
   });
   $('#btn-sim').addEventListener('click', () => {
     audio.init();
