@@ -1109,6 +1109,14 @@ const ZOMBIE_ORDER = ['crawler', 'walker', 'brute', 'runner', 'screamer', 'stalk
 const ATTACK_RANGE_DEFAULT_M = 2.1; // ~7 ft
 const REACH_BASE_FT = 7; // default reach setting; type attackM values scale around this
 const TEAM_LINK_M = 30; // teammates must stay this close to earn team points
+// A zombie that has locked on keeps hunting until the player is genuinely far
+// away. Sound/smell keeps the lock alive inside KEEP, memory bridges the gap
+// out to GIVEUP, and only then does it go back to wandering.
+const CHASE_MEMORY_MS = 16000;
+const CHASE_KEEP_M = 240;
+const CHASE_GIVEUP_M = 320;
+const CHASE_REPATH_MIN_MS = 2200;
+const CHASE_REPATH_MAX_MS = 3400;
 const PROFILE_TOPIC = 'zrun/v2/profile/';
 function zombieReachScale() {
   const ft = Number(state.zombieReachFt);
@@ -1590,43 +1598,120 @@ class SoundEngine {
   damage() { this.tone(150, 45, 0.28, 'sawtooth', 0.26); }
   wave() { [523, 659, 784, 1046].forEach((f, i) => this.tone(f, null, 0.2, 'triangle', 0.16, i * 0.09)); }
   scream() { this.tone(760, 190, 0.5, 'sawtooth', 0.16); this.tone(430, 110, 0.62, 'square', 0.09, 0.08); }
-  spatialTone(freq, freq2, dur, type, vol, pan, delay = 0, tilt = 0) {
+  setListener(headingDeg) {
+    if (!this.ctx || !this.ctx.listener) return;
+    const l = this.ctx.listener;
+    const h = (Number(headingDeg) || 0) * Math.PI / 180;
+    // Web Audio looks down -Z. Forward for compass heading h is
+    // (sin h, 0, -cos h), so the map and the sound field stay aligned.
+    const fx = Math.sin(h), fz = -Math.cos(h);
+    try {
+      if (l.forwardX) {
+        l.forwardX.value = fx; l.forwardY.value = 0; l.forwardZ.value = fz;
+        l.upX.value = 0; l.upY.value = 1; l.upZ.value = 0;
+        if (l.positionX) { l.positionX.value = 0; l.positionY.value = 0; l.positionZ.value = 0; }
+      } else if (l.setOrientation) {
+        l.setOrientation(fx, 0, fz, 0, 1, 0);
+        if (l.setPosition) l.setPosition(0, 0, 0);
+      }
+    } catch (e) { /* older listener API */ }
+  }
+  spatialTone(opts = {}) {
     if (!this.ctx || this.muted) return;
+    const {
+      freq = 440, freq2 = null, dur = 0.2, type = 'sine', vol = 0.2,
+      relBearing = 0, distance = 12, delay = 0, tilt = 0, occluded = false,
+      pan = null,
+    } = opts;
     const t0 = this.ctx.currentTime + delay;
     const osc = this.ctx.createOscillator(), g = this.ctx.createGain();
     const bend = 1 + clamp(Number(tilt) || 0, -1, 1) * 0.06;
     osc.type = type;
-    osc.frequency.setValueAtTime(freq * bend, t0);
+    osc.frequency.setValueAtTime(Math.max(20, freq * bend), t0);
     if (freq2) osc.frequency.exponentialRampToValueAtTime(Math.max(20, freq2 * bend), t0 + dur);
     g.gain.setValueAtTime(0.0001, t0);
     g.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol), t0 + 0.012);
     g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
     osc.connect(g);
-    if (this.ctx.createStereoPanner) {
+
+    // Head shadow: sounds behind you and occluded sounds lose their highs,
+    // which is a strong extra directional cue on top of the stereo image.
+    const rel = clamp(Number(relBearing) || 0, -180, 180);
+    let tail = g;
+    if (this.ctx.createBiquadFilter) {
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.Q.value = 0.7;
+      const behind = Math.abs(rel) > 110;
+      filter.frequency.value = occluded ? 620 : behind ? 2400 : 13000;
+      g.connect(filter);
+      tail = filter;
+    }
+
+    const fallbackPan = pan != null
+      ? clamp(Number(pan) || 0, -1, 1)
+      : clamp(Math.sin(rel * Math.PI / 180), -1, 1);
+    let placed = false;
+    if (this.ctx.createPanner) {
+      try {
+        const panner = this.ctx.createPanner();
+        panner.panningModel = 'HRTF';
+        panner.distanceModel = 'inverse';
+        panner.refDistance = 20;
+        panner.maxDistance = 500;
+        panner.rolloffFactor = 0.38;
+        const d = Math.max(3, Number(distance) || 12);
+        const x = Math.sin(rel * Math.PI / 180) * d;
+        const z = -Math.cos(rel * Math.PI / 180) * d;
+        if (panner.positionX) {
+          panner.positionX.value = x; panner.positionY.value = 0; panner.positionZ.value = z;
+        } else if (panner.setPosition) {
+          panner.setPosition(x, 0, z);
+        }
+        tail.connect(panner);
+        panner.connect(this.master);
+        placed = true;
+      } catch (e) { placed = false; }
+    }
+    if (!placed && this.ctx.createStereoPanner) {
       const p = this.ctx.createStereoPanner();
-      p.pan.value = clamp(Number(pan) || 0, -1, 1);
-      g.connect(p); p.connect(this.master);
-    } else {
-      g.connect(this.master);
+      p.pan.value = fallbackPan;
+      tail.connect(p); p.connect(this.master);
+    } else if (!placed) {
+      tail.connect(this.master);
     }
     osc.start(t0); osc.stop(t0 + dur + 0.02);
   }
-  threatBeep(kind, pan, loud = 1, tilt = 0) {
-    const v = clamp(loud, 0.2, 1.4);
+  threatBeep(kind, opts = {}) {
+    const {
+      relBearing = 0, distance = 12, loud = 1, tilt = 0,
+      occluded = false, delay = 0,
+    } = opts;
+    const v = clamp(loud, 0.15, 1.6);
+    const base = { relBearing, distance, tilt, occluded, delay };
     if (kind === 'brute') {
-      this.spatialTone(96, 58, 0.5, 'sawtooth', 0.24 * v, pan, 0, tilt);
-      this.spatialTone(52, 32, 0.55, 'sine', 0.2 * v, pan, 0.03, tilt);
+      this.spatialTone({ ...base, freq: 92, freq2: 54, dur: 0.52, type: 'sawtooth', vol: 0.26 * v });
+      this.spatialTone({ ...base, freq: 48, freq2: 30, dur: 0.6, type: 'sine', vol: 0.22 * v, delay: delay + 0.03 });
     } else if (kind === 'runner') {
-      this.spatialTone(1240, 860, 0.16, 'square', 0.22 * v, pan, 0, tilt);
-      this.spatialTone(1240, 860, 0.12, 'square', 0.14 * v, pan, 0.09, tilt);
+      this.spatialTone({ ...base, freq: 1320, freq2: 900, dur: 0.15, type: 'square', vol: 0.24 * v });
+      this.spatialTone({ ...base, freq: 1320, freq2: 900, dur: 0.12, type: 'square', vol: 0.16 * v, delay: delay + 0.1 });
     } else if (kind === 'screamer') {
-      this.spatialTone(880, 420, 0.3, 'triangle', 0.2 * v, pan, 0, tilt);
+      this.spatialTone({ ...base, freq: 940, freq2: 380, dur: 0.32, type: 'triangle', vol: 0.22 * v });
+    } else if (kind === 'crawler') {
+      this.spatialTone({ ...base, freq: 430, freq2: 300, dur: 0.26, type: 'triangle', vol: 0.13 * v });
+    } else if (kind === 'stalker') {
+      this.spatialTone({ ...base, freq: 1080, freq2: 760, dur: 0.2, type: 'sine', vol: 0.18 * v });
     } else {
-      this.spatialTone(680, 520, 0.18, 'sine', 0.16 * v, pan, 0, tilt);
+      this.spatialTone({ ...base, freq: 700, freq2: 520, dur: 0.18, type: 'sine', vol: 0.17 * v });
     }
   }
-  areaPulse(pan, loud = 1) {
-    this.spatialTone(300, 240, 0.24, 'sine', 0.055 * clamp(loud, 0.2, 1.4), pan);
+  areaPulse(opts = {}) {
+    const { relBearing = 0, distance = 30, loud = 1 } = opts;
+    this.spatialTone({
+      freq: 250, freq2: 190, dur: 0.32, type: 'sine',
+      vol: 0.07 * clamp(loud, 0.2, 1.5),
+      relBearing, distance, occluded: true,
+    });
   }
   over() { [330, 262, 208, 155].forEach((f, i) => this.tone(f, null, 0.35, 'sawtooth', 0.14, i * 0.16)); }
   startSiren() {
@@ -2361,12 +2446,9 @@ function updateSensorReadout() {
   el.classList.toggle('warn', sensors.enabled && !sensorFresh(8000));
 }
 function panForBearing(b, h) {
+  // Constant-power stereo fallback for browsers without HRTF panners.
   const rel = angleDelta(b, h);
-  let pan = clamp(rel / 75, -1, 1);
-  // Phone tilt nudges the stereo image; a real head-tracking API is not
-  // exposed to Safari web pages, so this is the closest available cue.
-  pan = clamp(pan + sensors.tilt * 0.14, -1, 1);
-  return pan;
+  return clamp(Math.sin(clamp(rel, -90, 90) * Math.PI / 180), -1, 1);
 }
 function syncSensorToggles() {
   const radarBtn = $('#toggle-radar');
@@ -2384,29 +2466,53 @@ function updateAudioRadar(now) {
   if (!state.audioRadar || state.muted || !state.gameActive || !state.player) return;
   if (!audio.ctx || now < radar.nextAt) return;
   const p = state.player;
-  let visible = null, vd = Infinity, hidden = null, hd = Infinity;
+  audio.setListener(state.heading);
+
+  const visible = [], hidden = [];
   for (const z of zombies) {
     const d = haversine(p.lat, p.lng, z.lat, z.lng);
-    if (d > 110) continue;
-    if (hasLineOfSight(p.lat, p.lng, z.lat, z.lng)) {
-      if (d < vd) { vd = d; visible = z; }
-    } else if (d < hd) { hd = d; hidden = z; }
+    if (d > 130) continue;
+    const rel = angleDelta(bearing(p.lat, p.lng, z.lat, z.lng), state.heading);
+    if (hasLineOfSight(p.lat, p.lng, z.lat, z.lng)) visible.push({ z, d, rel });
+    else hidden.push({ z, d, rel });
   }
-  const threat = visible || hidden;
-  if (!threat) { radar.nextAt = now + 1100; radar.lastVisible = false; return; }
-  const d = visible ? vd : hd;
-  const proximity = clamp(1 - d / 110, 0.1, 1);
-  const pan = panForBearing(bearing(p.lat, p.lng, threat.lat, threat.lng), state.heading);
-  if (visible) {
-    audio.threatBeep(threat.type && threat.type.id, pan, 0.35 + proximity * 0.95, sensors.tilt);
-    const base = threat.type && threat.type.id === 'runner' ? 360
-      : threat.type && threat.type.id === 'brute' ? 980 : 720;
-    radar.nextAt = now + Math.max(240, base - proximity * 260);
+  visible.sort((a, b) => a.d - b.d);
+  hidden.sort((a, b) => a.d - b.d);
+
+  const lead = visible[0] || null;
+  const behind = hidden[0] || null;
+  if (!lead && !behind) { radar.nextAt = now + 900; radar.lastVisible = false; return; }
+
+  const proximity = lead
+    ? clamp(1 - lead.d / 130, 0.08, 1)
+    : clamp(1 - behind.d / 130, 0.08, 1);
+
+  if (lead) {
+    audio.threatBeep(lead.z.type && lead.z.type.id, {
+      relBearing: lead.rel, distance: lead.d,
+      loud: 0.5 + proximity * 1.0, tilt: sensors.tilt, occluded: false,
+    });
+    // A second visible threat at a different bearing makes a group feel wide
+    // instead of like a single point.
+    const second = visible[1];
+    if (second && second.d < 95 && Math.abs(angleDelta(second.rel, lead.rel)) > 32) {
+      audio.threatBeep(second.z.type && second.z.type.id, {
+        relBearing: second.rel, distance: second.d,
+        loud: 0.22 + clamp(1 - second.d / 130, 0.08, 1) * 0.6,
+        tilt: sensors.tilt, occluded: false, delay: 0.05,
+      });
+    }
+    const base = lead.z.type && lead.z.type.id === 'runner' ? 340
+      : lead.z.type && lead.z.type.id === 'brute' ? 900 : 640;
+    radar.nextAt = now + Math.max(200, base - proximity * 250);
   } else {
-    audio.areaPulse(pan * 0.65, 0.45 + proximity * 0.55);
-    radar.nextAt = now + 1250;
+    audio.areaPulse({
+      relBearing: behind.rel, distance: behind.d,
+      loud: 0.45 + proximity * 0.55,
+    });
+    radar.nextAt = now + 1050;
   }
-  radar.lastVisible = !!visible;
+  radar.lastVisible = !!lead;
 }
 
 /* ---------------- player position & markers ---------------- */
@@ -3399,6 +3505,7 @@ function addZombieAt(node, type, opts = {}) {
     path: [], pathIndex: 0, repathAt: 0, attackAt: 0,
     speedFactor: rand(0.88, 1.12), facing: rand(0, 360),
     alertUntil: 0, alerted: false, screamAt: 0,
+    lastSeenAt: 0, lastKnown: null,
     wanderEdge: null, wanderPauseUntil: 0,
     remote: !!opts.remote, tLat: node.lat, tLng: node.lng, lastSync: Date.now(),
     ownerId: opts.ownerId || null, playerZombie: !!opts.playerZombie,
@@ -3457,11 +3564,14 @@ function spawnZombie(opts = {}) {
   spawnCluster(node, Math.round(rand(1, 3)));
   return true;
 }
-function alertNearby(z, radiusM, now) {
+function alertNearby(z, radiusM, now, at) {
+  const point = at || { lat: z.lat, lng: z.lng };
   for (const o of zombies) {
     if (o === z) continue;
     if (haversine(z.lat, z.lng, o.lat, o.lng) <= radiusM) {
-      o.alertUntil = Math.max(o.alertUntil || 0, now + 7000);
+      o.alertUntil = Math.max(o.alertUntil || 0, now + CHASE_MEMORY_MS);
+      o.lastKnown = { lat: point.lat, lng: point.lng };
+      o.wanderEdge = null;
     }
   }
 }
@@ -3665,49 +3775,78 @@ function updateZombies(dt) {
     if (!target) continue;
     const dT = haversine(z.lat, z.lng, target.lat, target.lng);
     const sees = zombieCanSense(z, dT, cfg, target);
+
     if (sees) {
-      z.alertUntil = now + 8000;
+      z.lastSeenAt = now;
+      z.lastKnown = { lat: target.lat, lng: target.lng };
+      z.alertUntil = now + CHASE_MEMORY_MS;
+      z.wanderEdge = null;
       if (z.type.id === 'screamer' && now >= z.screamAt) {
         z.screamAt = now + 12000;
-        alertNearby(z, 130, now);
+        alertNearby(z, 165, now, target);
         audio.scream();
         if (haversine(z.lat, z.lng, p.lat, p.lng) < 90) toast('Screamer — the horde heard that', 'warn', 2200);
       }
+    } else if (dT <= CHASE_KEEP_M && now < z.alertUntil) {
+      // No clean sight line, but a nearby runner still keeps the horde locked
+      // on through sound and smell. This is what stops them losing interest
+      // the moment the player ducks behind a wall.
+      z.alertUntil = Math.max(z.alertUntil, now + CHASE_MEMORY_MS * 0.65);
+      if (!z.lastKnown) z.lastKnown = { lat: target.lat, lng: target.lng };
     }
-    const alerted = now < z.alertUntil || dT <= 18;
+
+    const tooFar = dT > CHASE_GIVEUP_M;
+    const alerted = !tooFar && (now < z.alertUntil || dT <= 26);
     if (alerted !== z.alerted) {
       z.alerted = alerted;
       const el = z.marker.getElement();
       if (el) el.classList.toggle('alert', alerted);
+      if (!alerted) {
+        z.path = []; z.pathIndex = 0; z.repathAt = 0;
+        z.wanderEdge = null;
+        z.wanderPauseUntil = now + rand(300, 900);
+      }
     }
     if (dT <= 1.4) continue;
 
     const step = state.zombieMps * cfg.speedMul * z.speedMul * z.speedFactor * dt;
     if (alerted) {
-      const clearRun = !segmentBlocked(z.lat, z.lng, target.lat, target.lng);
+      // When sight is broken, head for the last place they saw or heard you.
+      // If they reach that spot and you are still close, keep sweeping toward
+      // your current position instead of stopping there.
+      let aim = target;
+      if (!sees && z.lastKnown) {
+        const lk = z.lastKnown;
+        if (haversine(z.lat, z.lng, lk.lat, lk.lng) < 7 && dT < 170) {
+          z.lastKnown = { lat: target.lat, lng: target.lng };
+        }
+        aim = z.lastKnown;
+      }
+      const aimDist = haversine(z.lat, z.lng, aim.lat, aim.lng);
+      const clearRun = !segmentBlocked(z.lat, z.lng, aim.lat, aim.lng);
       const chaseDirect = clearRun && (
-        dT < 24 ||
-        (target.offNetwork && dT < 130) ||
+        aimDist < 140 ||
+        (target.offNetwork && aimDist < 170) ||
         (target.green && pointInPolygon(z.lat, z.lng, target.green.pts))
       );
       if (chaseDirect) {
-        z.facing = bearing(z.lat, z.lng, target.lat, target.lng);
-        if (!stepToward(z, target.lat, target.lng, step)) {
+        z.facing = bearing(z.lat, z.lng, aim.lat, aim.lng);
+        if (!stepToward(z, aim.lat, aim.lng, step)) {
           z.path = []; z.pathIndex = 0; z.repathAt = 0;
         }
       } else {
         if (now >= z.repathAt || !z.path || z.pathIndex >= z.path.length) {
           const sn = nearestNode(z.lat, z.lng);
-          const gn = nearestNode(target.lat, target.lng);
+          const gn = nearestNode(aim.lat, aim.lng);
           if (sn && gn) {
             z.path = findPathCached(sn.id, gn.id) || [];
             z.pathIndex = 0;
-            z.repathAt = now + rand(3600, 5200);
+            z.repathAt = now + rand(CHASE_REPATH_MIN_MS, CHASE_REPATH_MAX_MS);
           } else z.path = [];
         }
         const beforeLat = z.lat, beforeLng = z.lng;
-        if (z.path && z.path.length) followPath(z, step, target);
-        else greedyStep(z, step, target);
+        if (z.path && z.path.length) followPath(z, step, aim);
+        else greedyStep(z, step, aim);
         if (haversine(beforeLat, beforeLng, z.lat, z.lng) > 0.01) z.facing = bearing(beforeLat, beforeLng, z.lat, z.lng);
       }
     } else {
