@@ -387,6 +387,18 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
 .friend-empty{padding:9px;text-align:center;font-size:9.5px;color:var(--dim);line-height:1.45}
 .account-note{margin:10px 0 0;font-size:8.5px;line-height:1.45;color:var(--dim)}
 .squad-chip.split{border-color:rgba(255,77,94,.5);color:var(--red);background:rgba(40,8,12,.9);animation:threatBlink .8s infinite alternate}
+.compass-chip{gap:6px;border-color:rgba(79,227,255,.3);font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--cyan)}
+.compass-needle{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 40% 35%,rgba(79,227,255,.22),rgba(79,227,255,.04));border:1px solid rgba(79,227,255,.35);position:relative}
+.compass-needle i{font-size:10px;transform:rotate(var(--ch,0deg));transition:transform .18s linear;color:#dffaff}
+.compass-text{min-width:42px;text-align:right}
+.compass-chip.gps{color:var(--green);border-color:rgba(109,255,168,.3)}
+.compass-chip.gps .compass-needle{border-color:rgba(109,255,168,.35);background:radial-gradient(circle at 40% 35%,rgba(109,255,168,.22),rgba(109,255,168,.04))}
+.compass-chip.gps .compass-needle i{color:#d9ffe8}
+.sensor-row{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap}
+.sensor-row .btn{height:28px;padding:0 9px;font-size:9px}
+.sensor-readout{margin:7px 0 0;font-family:var(--mono);font-size:8.5px;line-height:1.45;color:var(--dim)}
+.sensor-readout b{color:var(--cyan);font-weight:600}
+.sensor-readout.warn b{color:var(--amber)}
 .remote-name .team-tag{display:inline-block;margin-left:4px;padding:0 3px;border-radius:3px;font-family:var(--mono);font-size:7.5px;background:rgba(109,255,168,.18);color:var(--green)}
 .remote-marker.team-B .team-tag{background:rgba(255,182,72,.18);color:var(--amber)}
 .team-row{display:grid;grid-template-columns:26px 1fr;gap:8px;align-items:start;padding:8px;border-radius:9px;border:1px solid var(--line);background:rgba(255,255,255,.02)}
@@ -567,6 +579,10 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
     </div>
     <div id="squad-chip" class="hud-chip squad-chip hidden" title="Squad link active">
       <i class="fa-solid fa-link"></i><span>SQUAD</span>
+    </div>
+    <div id="compass-chip" class="hud-chip compass-chip hidden" title="Compass heading — the map is north-up">
+      <span class="compass-needle"><i class="fa-solid fa-location-arrow"></i></span>
+      <span id="compass-text" class="compass-text">N</span>
     </div>
   </div>
 
@@ -833,6 +849,25 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;bac
               <span class="vt-text"><span class="vt-name">Vision cone &amp; heading</span><span class="vt-sub">Show your look direction on the map</span></span>
               <span class="vt-switch" aria-hidden="true"></span>
             </button>
+            <div>
+              <div class="field-label">Audio radar <span id="radar-status" class="step-status">on</span></div>
+              <button id="toggle-radar" class="vision-toggle on" type="button" aria-pressed="true">
+                <span class="vt-icon"><i class="fa-solid fa-volume-high"></i></span>
+                <span class="vt-text"><span class="vt-name">Directional threat beeps</span><span class="vt-sub">Pan and cadence tell you where it is</span></span>
+                <span class="vt-switch" aria-hidden="true"></span>
+              </button>
+              <button id="toggle-sensors" class="vision-toggle on" type="button" aria-pressed="true">
+                <span class="vt-icon"><i class="fa-solid fa-compass"></i></span>
+                <span class="vt-text"><span class="vt-name">Compass &amp; motion heading</span><span class="vt-sub">Link the map to the real world</span></span>
+                <span class="vt-switch" aria-hidden="true"></span>
+              </button>
+              <div id="sensor-readout" class="sensor-readout">Compass <b>waiting</b> · GPS heading <b>—</b></div>
+              <div class="sensor-row">
+                <button id="btn-enable-sensors" class="btn btn-ghost" type="button"><i class="fa-solid fa-compass"></i> Enable sensors</button>
+                <button id="btn-recalibrate" class="btn btn-ghost" type="button"><i class="fa-solid fa-rotate"></i> Recalibrate</button>
+              </div>
+              <p class="setup-note">Only threats with a clear line of sight get a sharp directional beep; hidden ones get a softer area pulse. Web pages cannot read AirPods head-tracking — this uses the phone compass, GPS walking direction and motion gyro instead.</p>
+            </div>
           </div>
         </details>
       </section>
@@ -1087,6 +1122,10 @@ const state = {
   lastPosTs: 0,
   lastMoveAt: 0,
   heading: 0,
+  gpsHeading: null,
+  headingSource: 'gps',
+  audioRadar: true,
+  sensorHeading: true,
   gameActive: false,
   simulation: false,
   follow: true,
@@ -1198,7 +1237,7 @@ const damageFlash = $('#damage-flash');
 /* ---------------- accounts & friends ---------------- */
 const ACCOUNT_KEY = 'zrun.accounts.v1';
 const SESSION_KEY = 'zrun.session.v1';
-const acct = { user: null, rec: null, profiles: new Map(), pending: null, authMode: 'in' };
+const acct = { user: null, rec: null, profiles: new Map(), pending: null, pendingFriend: null, authMode: 'in' };
 
 function sanitizeUser(s) {
   return String(s || '').toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 16);
@@ -1319,6 +1358,12 @@ function onProfileMessage(m) {
     u, ph: m.ph || prev.ph || '', best: m.best || prev.best || null,
     created: m.created || prev.created || 0, ts: m.ts || Date.now(),
   });
+  if (acct.pendingFriend && acct.pendingFriend.name === u) {
+    const pend = acct.pendingFriend;
+    acct.pendingFriend = null;
+    if (m.ph || m.best) commitFriend(u, true);
+    else toast(`No account named “${pend.name}”.`, 'warn', 3000);
+  }
   if (acct.pending && acct.pending.user === u) {
     const pend = acct.pending;
     acct.pending = null;
@@ -1347,22 +1392,64 @@ function friendBest(name) {
   if (a && b) return (Number(a.score) || 0) >= (Number(b.score) || 0) ? a : b;
   return a || b || null;
 }
-function addFriend(name) {
+function friendLiveState(name) {
+  name = sanitizeUser(name);
+  for (const r of net.remotes.values()) {
+    if (Date.now() - (r.lastSeen || 0) > 16000) continue;
+    if (sanitizeUser(r.u) === name || sanitizeUser(r.name) === name) return r;
+  }
+  return null;
+}
+function friendDisplayBest(name) {
+  const stored = friendBest(name);
+  const live = friendLiveState(name);
+  if (!live) return stored;
+  if (!stored || (Number(live.score) || 0) > (Number(stored.score) || 0)) {
+    return {
+      score: Number(live.score) || 0, dist: Number(live.dist) || 0,
+      mission: live.mission || 'endless', team: live.team || '',
+      date: Date.now(), live: true,
+    };
+  }
+  return stored;
+}
+function hasProfile(name) {
+  name = sanitizeUser(name);
+  const local = accountStore()[name];
+  const remote = acct.profiles.get(name);
+  return !!(local && local.u) || !!(remote && (remote.ph || remote.best));
+}
+function commitFriend(name, announce = true) {
   name = sanitizeUser(name);
   if (!acct.rec) return 'Sign in first.';
-  if (!name) return 'Enter a username.';
-  if (name === acct.user.toLowerCase()) return 'That is your own username.';
   if (!acct.rec.friends) acct.rec.friends = [];
   if (!acct.rec.friends.includes(name)) {
     acct.rec.friends.push(name);
     persistActiveAccount();
     publishProfile();
-    toast(`${name} added to friends`, 'good', 2000);
+    if (announce) toast(`${name} added to friends`, 'good', 2000);
   }
   requestProfile(name);
   renderAccount();
   renderScoreboard();
   return null;
+}
+function addFriend(name) {
+  name = sanitizeUser(name);
+  if (!acct.rec) return 'Sign in first.';
+  if (!name) return 'Enter a username.';
+  if (name === acct.user.toLowerCase()) return 'That is your own username.';
+  if (hasProfile(name)) return commitFriend(name);
+  if (!net.connected) return 'Join a live room to verify that account first.';
+  requestProfile(name);
+  acct.pendingFriend = { name, at: Date.now() };
+  setTimeout(() => {
+    if (acct.pendingFriend && acct.pendingFriend.name === name) {
+      acct.pendingFriend = null;
+      toast(`No account named “${name}”. Ask them to sign in and finish a run first.`, 'warn', 3600);
+    }
+  }, 7000);
+  return 'LOOKUP_FRIEND';
 }
 function removeFriend(name) {
   if (!acct.rec) return;
@@ -1424,7 +1511,7 @@ function renderAccount() {
   const online = new Set();
   for (const r of net.remotes.values()) if (r.u) online.add(sanitizeUser(r.u));
   list.innerHTML = friends.map(f => {
-    const b = friendBest(f);
+    const b = friendDisplayBest(f);
     const live = online.has(f);
     const sub = b
       ? `${(Number(b.dist) || 0).toFixed(2)} mi · ${missionLabel(b.mission)}${b.team ? ' · Team ' + b.team : ''} · ${new Date(Number(b.date) || Date.now()).toLocaleDateString()}`
@@ -1503,6 +1590,44 @@ class SoundEngine {
   damage() { this.tone(150, 45, 0.28, 'sawtooth', 0.26); }
   wave() { [523, 659, 784, 1046].forEach((f, i) => this.tone(f, null, 0.2, 'triangle', 0.16, i * 0.09)); }
   scream() { this.tone(760, 190, 0.5, 'sawtooth', 0.16); this.tone(430, 110, 0.62, 'square', 0.09, 0.08); }
+  spatialTone(freq, freq2, dur, type, vol, pan, delay = 0, tilt = 0) {
+    if (!this.ctx || this.muted) return;
+    const t0 = this.ctx.currentTime + delay;
+    const osc = this.ctx.createOscillator(), g = this.ctx.createGain();
+    const bend = 1 + clamp(Number(tilt) || 0, -1, 1) * 0.06;
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq * bend, t0);
+    if (freq2) osc.frequency.exponentialRampToValueAtTime(Math.max(20, freq2 * bend), t0 + dur);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol), t0 + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    osc.connect(g);
+    if (this.ctx.createStereoPanner) {
+      const p = this.ctx.createStereoPanner();
+      p.pan.value = clamp(Number(pan) || 0, -1, 1);
+      g.connect(p); p.connect(this.master);
+    } else {
+      g.connect(this.master);
+    }
+    osc.start(t0); osc.stop(t0 + dur + 0.02);
+  }
+  threatBeep(kind, pan, loud = 1, tilt = 0) {
+    const v = clamp(loud, 0.2, 1.4);
+    if (kind === 'brute') {
+      this.spatialTone(96, 58, 0.5, 'sawtooth', 0.24 * v, pan, 0, tilt);
+      this.spatialTone(52, 32, 0.55, 'sine', 0.2 * v, pan, 0.03, tilt);
+    } else if (kind === 'runner') {
+      this.spatialTone(1240, 860, 0.16, 'square', 0.22 * v, pan, 0, tilt);
+      this.spatialTone(1240, 860, 0.12, 'square', 0.14 * v, pan, 0.09, tilt);
+    } else if (kind === 'screamer') {
+      this.spatialTone(880, 420, 0.3, 'triangle', 0.2 * v, pan, 0, tilt);
+    } else {
+      this.spatialTone(680, 520, 0.18, 'sine', 0.16 * v, pan, 0, tilt);
+    }
+  }
+  areaPulse(pan, loud = 1) {
+    this.spatialTone(300, 240, 0.24, 'sine', 0.055 * clamp(loud, 0.2, 1.4), pan);
+  }
   over() { [330, 262, 208, 155].forEach((f, i) => this.tone(f, null, 0.35, 'sawtooth', 0.14, i * 0.16)); }
   startSiren() {
     if (!this.ctx || this.muted || this.siren) return;
@@ -1668,6 +1793,8 @@ function loadPrefs() {
   state.teamMode = !!prefs.teamMode;
   state.team = prefs.team === 'B' ? 'B' : 'A';
   state.showVision = prefs.showVision !== false;
+  state.audioRadar = prefs.audioRadar !== false;
+  state.sensorHeading = prefs.sensorHeading !== false;
   state.muted = !!prefs.muted;
   loadSession();
   if (acct.rec) state.name = acct.user;
@@ -1705,7 +1832,10 @@ function savePrefs() {
       zombieMph: state.zombieMph, zombieReachFt: state.zombieReachFt,
       difficulty: state.difficulty, mission: state.mission,
       teamMode: state.teamMode, team: state.team,
-      showVision: state.showVision !== false, muted: state.muted,
+      showVision: state.showVision !== false,
+      audioRadar: state.audioRadar !== false,
+      sensorHeading: state.sensorHeading !== false,
+      muted: state.muted,
     }));
   } catch (e) {}
 }
@@ -2087,6 +2217,198 @@ function onGpsError(err) {
   }
 }
 
+/* ---------------- compass & motion heading ---------------- */
+const sensors = {
+  enabled: false, bound: false, compass: null, compassAt: 0,
+  turn: 0, motionAt: 0, tilt: 0, offset: 0, lastCalAt: 0, permission: 'unknown',
+};
+function normalizeDeg(d) { return ((Number(d) % 360) + 360) % 360; }
+function angleDelta(a, b) { return ((a - b + 540) % 360) - 180; }
+function lerpAngle(a, b, t) { return normalizeDeg(a + angleDelta(b, a) * t); }
+function sensorFresh(maxMs = 6000) {
+  return sensors.compass != null && performance.now() - sensors.compassAt < maxMs;
+}
+function bindSensorListeners() {
+  if (sensors.bound) return;
+  sensors.bound = true;
+  window.addEventListener('deviceorientationabsolute', onDeviceOrientation, true);
+  window.addEventListener('deviceorientation', onDeviceOrientation, true);
+  window.addEventListener('devicemotion', onDeviceMotion, true);
+}
+async function enableSensors(silent = false) {
+  sensors.enabled = true;
+  state.sensorHeading = true;
+  savePrefs();
+  try {
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+      sensors.permission = await DeviceOrientationEvent.requestPermission();
+      if (sensors.permission !== 'granted') {
+        sensors.enabled = false;
+        state.sensorHeading = false;
+        savePrefs();
+        if (!silent) toast('Compass permission was not granted.', 'warn', 2600);
+        updateSensorReadout();
+        syncSensorToggles();
+        return false;
+      }
+    }
+    if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+      try { await DeviceMotionEvent.requestPermission(); } catch (e) {}
+    }
+  } catch (e) {
+    sensors.permission = 'error';
+  }
+  bindSensorListeners();
+  if (!silent) toast('Compass linked — the map now follows the real world.', 'good', 2600);
+  updateSensorReadout();
+  syncSensorToggles();
+  return true;
+}
+function disableSensors() {
+  sensors.enabled = false;
+  state.sensorHeading = false;
+  savePrefs();
+  updateSensorReadout();
+  updateCompassChip();
+}
+function onDeviceOrientation(e) {
+  if (!sensors.enabled) return;
+  let h = null;
+  if (typeof e.webkitCompassHeading === 'number' && isFinite(e.webkitCompassHeading)) {
+    h = e.webkitCompassHeading;
+  } else if (e.alpha != null && isFinite(e.alpha)) {
+    const screenAngle = (screen.orientation && screen.orientation.angle) || window.orientation || 0;
+    h = 360 - e.alpha + Number(screenAngle || 0);
+  }
+  if (h == null || !isFinite(h)) return;
+  h = normalizeDeg(h);
+  if (sensors.compass == null) sensors.compass = h;
+  else {
+    const d = angleDelta(h, sensors.compass);
+    sensors.compass = normalizeDeg(sensors.compass + d * (Math.abs(d) > 55 ? 1 : 0.35));
+  }
+  sensors.compassAt = performance.now();
+  sensors.turn = 0; // absolute compass refresh resets relative gyro drift
+  state.headingSource = 'compass';
+  updateCompassChip();
+}
+function onDeviceMotion(e) {
+  if (!sensors.enabled) return;
+  const rr = e.rotationRate;
+  if (rr && isFinite(rr.alpha)) {
+    const now = performance.now();
+    const dt = sensors.motionAt ? clamp((now - sensors.motionAt) / 1000, 0, 0.2) : 0;
+    sensors.motionAt = now;
+    if (sensorFresh()) {
+      // Small relative turn between compass refreshes, hard-capped so drift
+      // can never dominate the absolute compass heading.
+      sensors.turn = clamp(sensors.turn + (Number(rr.alpha) || 0) * dt, -22, 22);
+    }
+  }
+  const acc = e.accelerationIncludingGravity;
+  if (acc) {
+    const ax = Number(acc.x) || 0;
+    sensors.tilt = clamp(ax / 9.81, -1, 1);
+  }
+}
+function resolveHeading() {
+  // Compass wins only when the user has it enabled and the reading is fresh.
+  if (state.sensorHeading && sensorFresh(5000)) {
+    state.heading = normalizeDeg(sensors.compass + sensors.offset + sensors.turn);
+    state.headingSource = 'compass';
+    return state.heading;
+  }
+  // GPS walking bearing is always the fallback, even with the compass off.
+  if (state.gpsHeading != null && isFinite(state.gpsHeading)) {
+    state.heading = normalizeDeg(state.gpsHeading);
+    state.headingSource = 'gps';
+    return state.heading;
+  }
+  state.headingSource = state.sensorHeading ? 'manual' : 'gps';
+  return state.heading;
+}
+function calibrateHeading(gpsBearing, speedMph) {
+  if (!sensors.enabled || !sensorFresh(8000)) return;
+  if (!(Number(speedMph) > 0.7)) return;
+  const now = performance.now();
+  if (now - sensors.lastCalAt < 4000) return;
+  sensors.lastCalAt = now;
+  const compassNow = normalizeDeg(sensors.compass + sensors.turn);
+  const delta = angleDelta(gpsBearing, compassNow);
+  if (Math.abs(delta) < 100) sensors.offset = lerpAngle(sensors.offset, delta, 0.35);
+  updateSensorReadout();
+}
+function updateCompassChip() {
+  const chip = $('#compass-chip');
+  if (!chip) return;
+  const live = sensors.enabled && sensorFresh(8000);
+  chip.classList.toggle('hidden', !live);
+  if (!live) return;
+  const h = normalizeDeg(state.heading);
+  const needle = chip.querySelector('.compass-needle i');
+  if (needle) needle.style.transform = `rotate(${h.toFixed(1)}deg)`;
+  const txt = $('#compass-text');
+  if (txt) txt.textContent = `${compass(h)} ${Math.round(h)}°`;
+  chip.classList.toggle('gps', state.headingSource === 'gps');
+}
+function updateSensorReadout() {
+  const el = $('#sensor-readout');
+  if (!el) return;
+  const c = sensorFresh(8000) ? `${compass(state.heading)} ${Math.round(normalizeDeg(state.heading))}°` : 'waiting';
+  const g = state.gpsHeading != null ? `${compass(state.gpsHeading)} ${Math.round(normalizeDeg(state.gpsHeading))}°` : '—';
+  const off = Math.round(sensors.offset);
+  el.innerHTML = `Compass <b>${c}</b> · GPS <b>${g}</b> · drift offset <b>${off}°</b>`;
+  el.classList.toggle('warn', sensors.enabled && !sensorFresh(8000));
+}
+function panForBearing(b, h) {
+  const rel = angleDelta(b, h);
+  let pan = clamp(rel / 75, -1, 1);
+  // Phone tilt nudges the stereo image; a real head-tracking API is not
+  // exposed to Safari web pages, so this is the closest available cue.
+  pan = clamp(pan + sensors.tilt * 0.14, -1, 1);
+  return pan;
+}
+function syncSensorToggles() {
+  const radarBtn = $('#toggle-radar');
+  const sensorBtn = $('#toggle-sensors');
+  const radarOn = state.audioRadar !== false;
+  const sensorOn = state.sensorHeading !== false;
+  if (radarBtn) { radarBtn.classList.toggle('on', radarOn); radarBtn.setAttribute('aria-pressed', radarOn ? 'true' : 'false'); }
+  if (sensorBtn) { sensorBtn.classList.toggle('on', sensorOn); sensorBtn.setAttribute('aria-pressed', sensorOn ? 'true' : 'false'); }
+  const rs = $('#radar-status');
+  if (rs) rs.textContent = radarOn ? 'on' : 'off';
+  updateSensorReadout();
+}
+const radar = { nextAt: 0, lastVisible: false };
+function updateAudioRadar(now) {
+  if (!state.audioRadar || state.muted || !state.gameActive || !state.player) return;
+  if (!audio.ctx || now < radar.nextAt) return;
+  const p = state.player;
+  let visible = null, vd = Infinity, hidden = null, hd = Infinity;
+  for (const z of zombies) {
+    const d = haversine(p.lat, p.lng, z.lat, z.lng);
+    if (d > 110) continue;
+    if (hasLineOfSight(p.lat, p.lng, z.lat, z.lng)) {
+      if (d < vd) { vd = d; visible = z; }
+    } else if (d < hd) { hd = d; hidden = z; }
+  }
+  const threat = visible || hidden;
+  if (!threat) { radar.nextAt = now + 1100; radar.lastVisible = false; return; }
+  const d = visible ? vd : hd;
+  const proximity = clamp(1 - d / 110, 0.1, 1);
+  const pan = panForBearing(bearing(p.lat, p.lng, threat.lat, threat.lng), state.heading);
+  if (visible) {
+    audio.threatBeep(threat.type && threat.type.id, pan, 0.35 + proximity * 0.95, sensors.tilt);
+    const base = threat.type && threat.type.id === 'runner' ? 360
+      : threat.type && threat.type.id === 'brute' ? 980 : 720;
+    radar.nextAt = now + Math.max(240, base - proximity * 260);
+  } else {
+    audio.areaPulse(pan * 0.65, 0.45 + proximity * 0.55);
+    radar.nextAt = now + 1250;
+  }
+  radar.lastVisible = !!visible;
+}
+
 /* ---------------- player position & markers ---------------- */
 function createPlayerMarker(lat, lng) {
   if (state.playerMarker) map.removeLayer(state.playerMarker);
@@ -2117,7 +2439,7 @@ function setPlayerPosition(lat, lng, opts = {}) {
   const accuracy = opts.accuracy || 0;
   const minMove = opts.force ? 0.01 : Math.max(1.2, accuracy * 0.3);
   const teleport = opts.teleport === true;
-  if (opts.heading != null && isFinite(opts.heading)) state.heading = (Number(opts.heading) + 360) % 360;
+  if (opts.heading != null && isFinite(opts.heading)) state.gpsHeading = normalizeDeg(Number(opts.heading));
 
   if (!teleport && d >= minMove && d < 400 && dt < 45) {
     state.distanceM += d;
@@ -2130,7 +2452,8 @@ function setPlayerPosition(lat, lng, opts = {}) {
       instMph = clamp((d / dt) * MPH_PER_MPS, 0, 30);
     }
     state.speedMph = lerp(state.speedMph, instMph, 0.4);
-    state.heading = bearing(prev.lat, prev.lng, lat, lng);
+    state.gpsHeading = normalizeDeg(bearing(prev.lat, prev.lng, lat, lng));
+    calibrateHeading(state.gpsHeading, state.speedMph);
     state.lastMoveAt = now;
   } else if (!teleport && d < 400 && dt < 45 && opts.speedMps != null && opts.speedMps >= 0.6) {
     // Slow fixes can fall under the GPS noise threshold; use reported speed so
@@ -2388,11 +2711,15 @@ function completeWave() {
    ============================================================ */
 const nav = {
   nodes: [], byId: new Map(), grid: new Map(), polygons: [],
+  buildings: [], bgrid: new Map(),
   ready: false, loading: false, source: '', token: 0, key: '',
 };
 const CELL = 0.0025;
 const EXCLUDED_ACCESS = new Set(['private', 'no']);
 const EXCLUDED_SERVICE = /driveway|parking_aisle|private/i;
+const BUILDING_PAD_M = 3.2;      // keep the horde out of front yards and off walls
+const SIGHT_PAD_M = 0.25;        // line of sight clips the wall itself
+const BUILDING_CACHE_KEY = 'zrun.buildings.v1';
 
 function cellKey(lat, lng) {
   return `${Math.floor(lat / CELL)},${Math.floor(lng / CELL)}`;
@@ -2457,9 +2784,149 @@ function greenPoly(lat, lng) {
 }
 function isInGreen(lat, lng) { return !!greenPoly(lat, lng); }
 
+/* ---------------- buildings, walls & line of sight ---------------- */
+function buildBuildingIndex() {
+  nav.bgrid.clear();
+  for (const b of nav.buildings) {
+    const i0 = Math.floor(b.minLat / CELL), i1 = Math.floor(b.maxLat / CELL);
+    const j0 = Math.floor(b.minLng / CELL), j1 = Math.floor(b.maxLng / CELL);
+    for (let i = i0; i <= i1; i++) {
+      for (let j = j0; j <= j1; j++) {
+        const k = `${i},${j}`;
+        let arr = nav.bgrid.get(k);
+        if (!arr) { arr = []; nav.bgrid.set(k, arr); }
+        arr.push(b);
+      }
+    }
+  }
+}
+function buildingsInBBox(minLat, maxLat, minLng, maxLng) {
+  if (!nav.buildings.length) return [];
+  const i0 = Math.floor(minLat / CELL), i1 = Math.floor(maxLat / CELL);
+  const j0 = Math.floor(minLng / CELL), j1 = Math.floor(maxLng / CELL);
+  const out = [], seen = new Set();
+  for (let i = i0; i <= i1; i++) {
+    for (let j = j0; j <= j1; j++) {
+      const arr = nav.bgrid.get(`${i},${j}`);
+      if (!arr) continue;
+      for (const b of arr) {
+        if (seen.has(b)) continue;
+        seen.add(b);
+        if (b.maxLat < minLat || b.minLat > maxLat || b.maxLng < minLng || b.minLng > maxLng) continue;
+        out.push(b);
+      }
+    }
+  }
+  return out;
+}
+function pointSegDistM(lat, lng, aLat, aLng, bLat, bLng) {
+  const cos = Math.cos(lat * Math.PI / 180) * 111320;
+  const px = lng * cos, py = lat * 111320;
+  const ax = aLng * cos, ay = aLat * 111320;
+  const bx = bLng * cos, by = bLat * 111320;
+  const dx = bx - ax, dy = by - ay;
+  const len2 = dx * dx + dy * dy;
+  let t = len2 > 0 ? ((px - ax) * dx + (py - ay) * dy) / len2 : 0;
+  t = Math.max(0, Math.min(1, t));
+  const qx = ax + t * dx, qy = ay + t * dy;
+  return Math.hypot(px - qx, py - qy);
+}
+function pointToBuildingDistM(lat, lng, b) {
+  if (pointInPolygon(lat, lng, b.pts)) return 0;
+  let best = Infinity;
+  const pts = b.pts;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const d = pointSegDistM(lat, lng, pts[j].lat, pts[j].lng, pts[i].lat, pts[i].lng);
+    if (d < best) best = d;
+  }
+  return best;
+}
+function segmentsCross(ax, ay, bx, by, cx, cy, dx, dy) {
+  const d1 = (bx - ax) * (cy - ay) - (by - ay) * (cx - ax);
+  const d2 = (bx - ax) * (dy - ay) - (by - ay) * (dx - ax);
+  const d3 = (dx - cx) * (ay - cy) - (dy - cy) * (ax - cx);
+  const d4 = (dx - cx) * (by - cy) - (dy - cy) * (bx - cx);
+  return ((d1 > 0 && d2 < 0) || (d1 < 0 && d2 > 0)) && ((d3 > 0 && d4 < 0) || (d3 < 0 && d4 > 0));
+}
+function segmentHitsBuilding(aLat, aLng, bLat, bLng, padM) {
+  if (!nav.buildings.length) return null;
+  const pad = padM / 111320;
+  const minLat = Math.min(aLat, bLat) - pad, maxLat = Math.max(aLat, bLat) + pad;
+  const minLng = Math.min(aLng, bLng) - pad, maxLng = Math.max(aLng, bLng) + pad;
+  const list = buildingsInBBox(minLat, maxLat, minLng, maxLng);
+  if (!list.length) return null;
+  for (const b of list) {
+    if (pointInPolygon(aLat, aLng, b.pts) || pointInPolygon(bLat, bLng, b.pts)) return b;
+    for (let i = 0, j = b.pts.length - 1; i < b.pts.length; j = i++) {
+      if (segmentsCross(aLat, aLng, bLat, bLng, b.pts[j].lat, b.pts[j].lng, b.pts[i].lat, b.pts[i].lng)) return b;
+    }
+    if (padM > 0) {
+      // Exact 2D segment-to-segment clearance. For non-intersecting segments
+      // the minimum distance is always at an endpoint of one segment.
+      for (let i = 0, j = b.pts.length - 1; i < b.pts.length; j = i++) {
+        const a = b.pts[j], c = b.pts[i];
+        const d = Math.min(
+          pointSegDistM(a.lat, a.lng, aLat, aLng, bLat, bLng),
+          pointSegDistM(c.lat, c.lng, aLat, aLng, bLat, bLng),
+          pointSegDistM(aLat, aLng, a.lat, a.lng, c.lat, c.lng),
+          pointSegDistM(bLat, bLng, a.lat, a.lng, c.lat, c.lng)
+        );
+        if (d < padM) return b;
+      }
+    }
+  }
+  return null;
+}
+function segmentBlocked(aLat, aLng, bLat, bLng, padM = BUILDING_PAD_M) {
+  return !!segmentHitsBuilding(aLat, aLng, bLat, bLng, padM);
+}
+function hasLineOfSight(aLat, aLng, bLat, bLng) {
+  return !segmentHitsBuilding(aLat, aLng, bLat, bLng, SIGHT_PAD_M);
+}
+function pointBlocked(lat, lng, padM = BUILDING_PAD_M) {
+  if (!nav.buildings.length) return false;
+  const pad = padM / 111320;
+  const list = buildingsInBBox(lat - pad, lat + pad, lng - pad, lng + pad);
+  for (const b of list) if (pointToBuildingDistM(lat, lng, b) <= padM) return true;
+  return false;
+}
+function saveBuildingCache() {
+  try {
+    const center = state.zone && state.zone.type === 'circle' ? state.zone.center : state.home;
+    if (!center) return;
+    const compact = nav.buildings.slice(0, 2600).map(b => b.pts.map(p => [+p.lat.toFixed(5), +p.lng.toFixed(5)]));
+    localStorage.setItem(BUILDING_CACHE_KEY, JSON.stringify({
+      lat: +center.lat.toFixed(3), lng: +center.lng.toFixed(3), ts: Date.now(), b: compact,
+    }));
+  } catch (e) {}
+}
+function loadBuildingCache() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(BUILDING_CACHE_KEY) || 'null');
+    if (!raw || !Array.isArray(raw.b)) return false;
+    const center = state.zone && state.zone.type === 'circle' ? state.zone.center : state.home;
+    if (!center) return false;
+    if (Math.abs(center.lat - raw.lat) > 0.02 || Math.abs(center.lng - raw.lng) > 0.02) return false;
+    const buildings = raw.b.map(pts => {
+      const shape = pts.map(p => ({ lat: p[0], lng: p[1] }));
+      let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
+      for (const p of shape) {
+        if (p.lat < minLat) minLat = p.lat; if (p.lat > maxLat) maxLat = p.lat;
+        if (p.lng < minLng) minLng = p.lng; if (p.lng > maxLng) maxLng = p.lng;
+      }
+      return { pts: shape, minLat, maxLat, minLng, maxLng };
+    }).filter(b => b.pts.length >= 2);
+    if (!buildings.length) return false;
+    nav.buildings = buildings;
+    buildBuildingIndex();
+    return true;
+  } catch (e) { return false; }
+}
+
 function buildNav(elements) {
   const byId = new Map();
   const polys = [];
+  const buildings = [];
   const nodes = [];
 
   for (const el of elements) {
@@ -2482,7 +2949,10 @@ function buildNav(elements) {
     const tags = el.tags || {};
     const green = !!(tags.leisure || tags.landuse || tags.natural);
     const highway = tags.highway;
-    if (!highway && !green) continue;
+    const isBuilding = !!tags.building || !!tags['building:part'] ||
+      (tags.barrier && /^(wall|fence|hedge|retaining_wall|city_wall|guard_rail|yes)$/.test(tags.barrier)) ||
+      tags.man_made === 'wall' || tags.man_made === 'hedge';
+    if (!highway && !green && !isBuilding) continue;
     if (highway) {
       if (tags.access && EXCLUDED_ACCESS.has(tags.access)) continue;
       if (highway === 'service' && EXCLUDED_SERVICE.test(tags.service || '')) continue;
@@ -2505,6 +2975,17 @@ function buildNav(elements) {
       polys.push({ pts: shape, minLat, maxLat, minLng, maxLng });
     }
     if (green) pts.forEach(p => { p.green = true; });
+    if (isBuilding && pts.length >= 2) {
+      const shape = pts.map(p => ({ lat: p.lat, lng: p.lng }));
+      let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
+      for (const p of shape) {
+        if (p.lat < minLat) minLat = p.lat;
+        if (p.lat > maxLat) maxLat = p.lat;
+        if (p.lng < minLng) minLng = p.lng;
+        if (p.lng > maxLng) maxLng = p.lng;
+      }
+      buildings.push({ pts: shape, minLat, maxLat, minLng, maxLng });
+    }
   }
 
   for (const n of byId.values()) if (n.adj.length) nodes.push(n);
@@ -2512,6 +2993,8 @@ function buildNav(elements) {
   nav.byId = byId;
   nav.nodes = nodes;
   nav.polygons = polys;
+  nav.buildings = buildings;
+  buildBuildingIndex();
   rebuildSpatialIndex();
 
   // Connect green-space nodes that touch a street but share no node with it.
@@ -2536,40 +3019,148 @@ function buildNav(elements) {
 }
 
 function buildFallbackNav() {
-  const c = state.home || { lat: 0, lng: 0 };
-  const step = 0.0011;
-  const n = 8;
-  const nodes = [];
-  const idx = (i, j) => (i + n) * (2 * n + 1) + (j + n);
-  const lngScale = 1 / Math.max(0.25, Math.cos(c.lat * Math.PI / 180));
-  for (let i = -n; i <= n; i++) {
-    for (let j = -n; j <= n; j++) {
-      nodes.push({
-        id: `f${i}_${j}`, lat: c.lat + i * step, lng: c.lng + j * step * lngScale,
-        adj: [], green: false, _adj: new Set(),
-      });
+  const b = zoneBounds();
+  const pad = 0.00035;
+  const south = b.getSouth() - pad, north = b.getNorth() + pad;
+  const west = b.getWest() - pad, east = b.getEast() + pad;
+  const target = 34;
+  const stepLat = Math.max(0.00055, (north - south) / target);
+  const stepLng = Math.max(0.00055, (east - west) / target);
+  const rows = [];
+  let r = 0;
+  for (let lat = south; lat <= north + 1e-9; lat += stepLat, r++) {
+    const row = [];
+    let c = 0;
+    for (let lng = west; lng <= east + 1e-9; lng += stepLng, c++) {
+      row.push({ id: `f${r}_${c}`, lat, lng, adj: [], green: false, _adj: new Set() });
     }
+    rows.push(row);
   }
-  const addEdge = (a, b) => {
-    const w = haversine(a.lat, a.lng, b.lat, b.lng);
-    if (!a._adj.has(b.id)) { a._adj.add(b.id); a.adj.push({ to: b.id, w }); }
-    if (!b._adj.has(a.id)) { b._adj.add(a.id); b.adj.push({ to: a.id, w }); }
+  const addEdge = (a, b2) => {
+    if (!a || !b2) return;
+    const w = haversine(a.lat, a.lng, b2.lat, b2.lng);
+    if (!a._adj.has(b2.id)) { a._adj.add(b2.id); a.adj.push({ to: b2.id, w }); }
+    if (!b2._adj.has(a.id)) { b2._adj.add(a.id); b2.adj.push({ to: a.id, w }); }
   };
-  for (let i = -n; i <= n; i++) {
-    for (let j = -n; j <= n; j++) {
-      if (j < n) addEdge(nodes[idx(i, j)], nodes[idx(i, j + 1)]);
-      if (i < n) addEdge(nodes[idx(i, j)], nodes[idx(i + 1, j)]);
+  const nodes = [];
+  for (let i = 0; i < rows.length; i++) {
+    for (let j = 0; j < rows[i].length; j++) {
+      nodes.push(rows[i][j]);
+      if (j + 1 < rows[i].length) addEdge(rows[i][j], rows[i][j + 1]);
+      if (i + 1 < rows.length && rows[i + 1][j]) addEdge(rows[i][j], rows[i + 1][j]);
     }
   }
   nodes.forEach(x => delete x._adj);
   nav.nodes = nodes;
   nav.byId = new Map(nodes.map(x => [x.id, x]));
   nav.polygons = [];
-  nav.ready = true;
+  nav.ready = nodes.length >= 8;
   nav.source = 'fallback';
   rebuildSpatialIndex();
 }
 
+function overpassQuery(bbox) {
+  return `[out:json][timeout:40];
+(
+  way["highway"~"^(footway|path|pedestrian|steps|residential|living_street|service|unclassified|tertiary|tertiary_link|secondary|secondary_link|primary|primary_link|cycleway|track|bridleway|road)$"](${bbox});
+  way["leisure"~"^(park|garden|playground|pitch|common|nature_reserve|dog_park|recreation_ground)$"](${bbox});
+  way["landuse"~"^(grass|meadow|recreation_ground|farmland|orchard|village_green|cemetery)$"](${bbox});
+  way["natural"~"^(grassland|scrub|heath|wood)$"](${bbox});
+  way["building"](${bbox});
+  way["building:part"](${bbox});
+  way["barrier"~"^(wall|fence|hedge|retaining_wall|city_wall|guard_rail|yes)$"](${bbox});
+  way["man_made"~"^(wall|hedge)$"](${bbox});
+);
+out body;
+>;
+out skel qt;`;
+}
+function overpassTiles(bounds) {
+  const south = bounds.getSouth(), north = bounds.getNorth();
+  const west = bounds.getWest(), east = bounds.getEast();
+  let span = 0.028;
+  let cols = 1, rows = 1;
+  for (let i = 0; i < 8; i++) {
+    cols = Math.max(1, Math.ceil((east - west) / span));
+    rows = Math.max(1, Math.ceil((north - south) / span));
+    if (cols * rows <= 6) break;
+    span *= 1.45;
+  }
+  const out = [];
+  const dLat = (north - south) / rows, dLng = (east - west) / cols;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const s = south + r * dLat, n = s + dLat;
+      const w = west + c * dLng, e = w + dLng;
+      out.push(`${s.toFixed(6)},${w.toFixed(6)},${n.toFixed(6)},${e.toFixed(6)}`);
+    }
+  }
+  return out;
+}
+async function fetchOverpassBBox(bbox, timeoutMs = 15000) {
+  const query = overpassQuery(bbox);
+  const endpoints = [
+    'https://overpass-api.de/api/interpreter',
+    'https://overpass.kumi.systems/api/interpreter',
+    'https://overpass.private.coffee/api/interpreter',
+  ];
+  const fetchOne = async (url) => {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+    try {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'data=' + encodeURIComponent(query),
+        signal: ctrl.signal,
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+      if (!data || !Array.isArray(data.elements)) throw new Error('bad payload');
+      return data.elements;
+    } finally {
+      clearTimeout(timer);
+    }
+  };
+  return Promise.any(endpoints.map(fetchOne));
+}
+async function fetchOverpassArea(bounds) {
+  const tiles = overpassTiles(bounds);
+  const seen = new Set();
+  const merged = [];
+  for (let i = 0; i < tiles.length; i += 3) {
+    const batch = tiles.slice(i, i + 3);
+    const settled = await Promise.allSettled(batch.map(t => fetchOverpassBBox(t, 15000)));
+    for (const s of settled) {
+      if (s.status !== 'fulfilled' || !s.value) continue;
+      for (const el of s.value) {
+        const k = `${el.type}:${el.id}`;
+        if (seen.has(k)) continue;
+        seen.add(k);
+        merged.push(el);
+      }
+    }
+  }
+  return merged.length ? merged : null;
+}
+
+function pruneNavBuildings() {
+  if (!nav.buildings.length || !nav.nodes.length) return;
+  const keep = [];
+  for (const n of nav.nodes) {
+    if (pointBlocked(n.lat, n.lng, 1.0)) continue;
+    n.adj = n.adj.filter(e => {
+      const m = nav.byId.get(e.to);
+      if (!m || pointBlocked(m.lat, m.lng, 1.0)) return false;
+      return !segmentBlocked(n.lat, n.lng, m.lat, m.lng, 0.5);
+    });
+    if (n.adj.length) keep.push(n);
+  }
+  if (keep.length >= 8) {
+    nav.nodes = keep;
+    rebuildSpatialIndex();
+  }
+}
 async function loadNavigation() {
   const b0 = zoneBounds();
   const key = `${b0.getSouth().toFixed(4)},${b0.getWest().toFixed(4)},${b0.getNorth().toFixed(4)},${b0.getEast().toFixed(4)}`;
@@ -2584,65 +3175,38 @@ async function loadNavigation() {
   nav.loading = true;
   nav.ready = false;
   nav.nodes = []; nav.byId = new Map(); nav.polygons = []; nav.grid.clear();
-  toast('Mapping streets, paths, parks & fields…', 'info', 3000);
+  nav.buildings = []; nav.bgrid.clear();
+  toast('Mapping streets, buildings & paths…', 'info', 3000);
 
-  const b = b0;
   const pad = 0.0004;
-  const s = (b.getSouth() - pad).toFixed(6), w = (b.getWest() - pad).toFixed(6);
-  const n = (b.getNorth() + pad).toFixed(6), e = (b.getEast() + pad).toFixed(6);
-  const bbox = `${s},${w},${n},${e}`;
-  const query = `[out:json][timeout:30];
-(
-  way["highway"~"^(footway|path|pedestrian|steps|residential|living_street|service|unclassified|tertiary|tertiary_link|secondary|secondary_link|primary|primary_link|cycleway|track|bridleway|road)$"](${bbox});
-  way["leisure"~"^(park|garden|playground|pitch|common|nature_reserve|dog_park|recreation_ground)$"](${bbox});
-  way["landuse"~"^(grass|meadow|recreation_ground|farmland|orchard|village_green|cemetery)$"](${bbox});
-  way["natural"~"^(grassland|scrub|heath|wood)$"](${bbox});
-);
-out body;
->;
-out skel qt;`;
-
-  const endpoints = [
-    'https://overpass-api.de/api/interpreter',
-    'https://overpass.kumi.systems/api/interpreter',
-    'https://overpass.private.coffee/api/interpreter',
-  ];
-
-  const controllers = [];
-  const fetchOne = async (url) => {
-    const ctrl = new AbortController();
-    controllers.push(ctrl);
-    const timer = setTimeout(() => ctrl.abort(), 16000);
-    try {
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: 'data=' + encodeURIComponent(query),
-        signal: ctrl.signal,
-      });
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      return await res.json();
-    } finally {
-      clearTimeout(timer);
-    }
-  };
+  const padded = L.latLngBounds(
+    [b0.getSouth() - pad, b0.getWest() - pad],
+    [b0.getNorth() + pad, b0.getEast() + pad],
+  );
 
   let data = null;
   try {
-    data = await Promise.any(endpoints.map(fetchOne));
+    data = await fetchOverpassArea(padded);
   } catch (err) {
-    console.warn('All Overpass mirrors failed:', err && err.message);
+    console.warn('Overpass area fetch failed:', err && err.message);
   }
-  controllers.forEach(c => { try { c.abort(); } catch (e) {} });
 
   if (token !== nav.token) return;
-  if (data && data.elements && data.elements.length) buildNav(data.elements);
+
+  if (data && data.length) buildNav(data);
   if (!nav.ready) {
     buildFallbackNav();
     toast('Street data unavailable — approximate grid active', 'warn', 4200);
   } else {
     toast(`Street network ready · ${nav.nodes.length.toLocaleString()} nodes`, 'good', 2600);
   }
+  if (nav.buildings.length) {
+    saveBuildingCache();
+    toast(`Building map ready · ${nav.buildings.length.toLocaleString()} structures`, 'info', 2600);
+  } else if (loadBuildingCache()) {
+    toast(`Building map restored · ${nav.buildings.length.toLocaleString()} structures`, 'info', 2600);
+  }
+  if (nav.source === 'fallback') pruneNavBuildings();
   nav.key = key;
   nav.loading = false;
 
@@ -2745,9 +3309,30 @@ function findPathCached(startId, goalId) {
 function currentDifficulty() {
   return DIFFICULTIES[state.difficulty] || DIFFICULTIES.normal;
 }
+function polygonAreaM2(pts) {
+  if (!pts || pts.length < 3) return 0;
+  const cos = Math.cos(pts[0].lat * Math.PI / 180) * 111320;
+  let area = 0;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const xi = pts[i].lng * cos, yi = pts[i].lat * 111320;
+    const xj = pts[j].lng * cos, yj = pts[j].lat * 111320;
+    area += xj * yi - xi * yj;
+  }
+  return Math.abs(area) / 2;
+}
+function zoneAreaM2() {
+  if (!state.zone) return Math.PI * 1609 * 1609;
+  if (state.zone.type === 'circle') return Math.PI * state.zone.radiusM * state.zone.radiusM;
+  return polygonAreaM2(state.zone.latlngs);
+}
+function zoneScaleFactor() {
+  const mi2 = zoneAreaM2() / (M_PER_MI * M_PER_MI);
+  return clamp(Math.sqrt(mi2 / 0.2), 0.65, 3.0);
+}
 function zombieCap() {
   const d = currentDifficulty();
-  return Math.min(d.cap, d.ambient + (state.wave - 1) * d.perWave);
+  const base = d.ambient + (state.wave - 1) * d.perWave;
+  return Math.max(8, Math.round(Math.min(d.cap * 2.6, base * zoneScaleFactor())));
 }
 function zoneNodePool() {
   if (!nav.ready || !nav.nodes.length) return [];
@@ -2770,6 +3355,7 @@ function pickSpawnNode(opts = {}) {
     const d = haversine(origin.lat, origin.lng, n.lat, n.lng);
     if (d < minDist) continue;
     if (maxDist && d > maxDist) continue;
+    if (pointBlocked(n.lat, n.lng, 1.4)) continue;
     if (avoidZombies && minSep > 0 && zombies.some(z => haversine(z.lat, z.lng, n.lat, n.lng) < minSep)) continue;
     return n;
   }
@@ -2792,15 +3378,21 @@ function pickZombieType(wave) {
 }
 function addZombieAt(node, type, opts = {}) {
   const t = type || ZOMBIE_TYPES.walker;
+  const baseSize = Math.max(16, Math.round(t.size * 0.78));
   const marker = L.marker([node.lat, node.lng], {
     icon: L.divIcon({
       className: 'zombie-marker',
-      html: `<div class="zombie-ring" style="--zs:${t.size}px"></div><div class="zombie-core" style="--zc:${t.color};--zs:${t.size}px"><i class="fa-solid ${t.icon}"></i></div>`,
-      iconSize: [t.size, t.size], iconAnchor: [t.size / 2, t.size / 2],
+      html: `<div class="zombie-ring"></div><div class="zombie-core"><i class="fa-solid ${t.icon}"></i></div>`,
+      iconSize: [40, 40], iconAnchor: [20, 20],
     }),
-    zIndexOffset: 200 + Math.round(40 - t.size),
+    zIndexOffset: 200 + Math.round(40 - baseSize),
     interactive: false,
   }).addTo(map);
+  const el = marker.getElement();
+  if (el) {
+    el.style.setProperty('--zs', baseSize + 'px');
+    el.style.setProperty('--zc', t.color);
+  }
   const z = {
     id: opts.id || uid(), marker, lat: node.lat, lng: node.lng,
     type: t, typeId: t.id, visionM: t.visionM, speedMul: t.speedMul, damageMul: t.damageMul,
@@ -2814,26 +3406,56 @@ function addZombieAt(node, type, opts = {}) {
   zombies.push(z);
   return z;
 }
+function hordeIconScale() {
+  const n = zombies.length;
+  if (n > 80) return 0.6;
+  if (n > 55) return 0.7;
+  if (n > 32) return 0.82;
+  return 1;
+}
+function refreshZombieIconScale() {
+  const s = hordeIconScale();
+  for (const z of zombies) {
+    const el = z.marker.getElement();
+    if (!el) continue;
+    const size = Math.max(14, Math.round(((z.type && z.type.size) || 30) * 0.78 * s));
+    el.style.setProperty('--zs', size + 'px');
+  }
+}
+function spawnCluster(center, count) {
+  const target = zombieCap();
+  const near = nearbyNodes(center.lat, center.lng, 26, 40).filter(n => !pointBlocked(n.lat, n.lng, 1.2));
+  const pool = near.length ? near : [center];
+  let made = 0;
+  for (let i = 0; i < count && zombies.length < target; i++) {
+    const node = pool[Math.floor(Math.random() * pool.length)];
+    addZombieAt(node, pickZombieType(state.wave));
+    made++;
+  }
+  if (made) refreshZombieIconScale();
+  return made;
+}
 function spawnInitialZombies() {
   if (!state.gameActive) return;
   if (net.connected && !isHordeHost()) return;
   const target = zombieCap();
   let guard = 0;
-  while (zombies.length < target && guard++ < target * 30) {
-    const sep = guard > target * 10 ? 16 : 30;
-    const node = pickSpawnNode({ minDist: 60, minSep: sep, tries: 120 });
-    if (!node) break;
-    addZombieAt(node, pickZombieType(state.wave));
+  while (zombies.length < target && guard++ < 90) {
+    const center = pickSpawnNode({ minDist: 55, minSep: 48, tries: 100 });
+    if (!center) break;
+    spawnCluster(center, Math.round(rand(3, 6)));
   }
+  refreshZombieIconScale();
 }
 function spawnZombie(opts = {}) {
   if (!state.gameActive || !nav.ready || !state.player) return null;
   if (net.connected && !isHordeHost()) return null;
   if (zombies.length >= zombieCap()) return null;
-  let node = pickSpawnNode({ minDist: opts.minDist ?? 110, maxDist: opts.maxDist ?? 0, minSep: opts.minSep ?? 26, tries: 140 });
-  if (!node) node = pickSpawnNode({ minDist: 60, maxDist: 0, minSep: 14, tries: 120 });
+  let node = pickSpawnNode({ minDist: opts.minDist ?? 110, maxDist: opts.maxDist ?? 0, minSep: 42, tries: 140 });
+  if (!node) node = pickSpawnNode({ minDist: 60, maxDist: 0, minSep: 18, tries: 120 });
   if (!node) return null;
-  return addZombieAt(node, opts.type || pickZombieType(state.wave));
+  spawnCluster(node, Math.round(rand(1, 3)));
+  return true;
 }
 function alertNearby(z, radiusM, now) {
   for (const o of zombies) {
@@ -2843,12 +3465,24 @@ function alertNearby(z, radiusM, now) {
     }
   }
 }
+function tryMove(z, lat, lng) {
+  if (pointBlocked(lat, lng)) return false;
+  z.lat = lat;
+  z.lng = lng;
+  return true;
+}
 function stepToward(z, lat, lng, stepM) {
   const d = haversine(z.lat, z.lng, lat, lng);
-  if (d < 0.01) return;
+  if (d < 0.01) return true;
   const f = Math.min(1, stepM / d);
-  z.lat += (lat - z.lat) * f;
-  z.lng += (lng - z.lng) * f;
+  const nLat = z.lat + (lat - z.lat) * f;
+  const nLng = z.lng + (lng - z.lng) * f;
+  if (tryMove(z, nLat, nLng)) return true;
+  // Slide along the wall instead of clipping through it.
+  if (Math.abs(nLng - z.lng) > 1e-12 && tryMove(z, z.lat, nLng)) return true;
+  if (Math.abs(nLat - z.lat) > 1e-12 && tryMove(z, nLat, z.lng)) return true;
+  z.blockedAt = performance.now();
+  return false;
 }
 function followPath(z, stepM, target) {
   if (!z.path || !z.path.length) { greedyStep(z, stepM, target); return; }
@@ -2859,21 +3493,25 @@ function followPath(z, stepM, target) {
     node = nav.byId.get(z.path[z.pathIndex]);
   }
   if (!node) { z.path = []; greedyStep(z, stepM, target); return; }
-  stepToward(z, node.lat, node.lng, stepM);
+  if (!stepToward(z, node.lat, node.lng, stepM)) {
+    z.path = []; z.pathIndex = 0; z.repathAt = 0;
+    greedyStep(z, stepM, target);
+  }
 }
 function greedyStep(z, stepM, target) {
   const p = target || state.player;
   const n = nearestNode(z.lat, z.lng);
   if (!n) { stepToward(z, p.lat, p.lng, stepM); return; }
-  let best = n;
-  let bd = haversine(n.lat, n.lng, p.lat, p.lng);
-  for (const e of n.adj) {
-    const m = nav.byId.get(e.to);
-    if (!m) continue;
-    const d = haversine(m.lat, m.lng, p.lat, p.lng);
-    if (d < bd) { bd = d; best = m; }
+  const options = n.adj
+    .map(e => nav.byId.get(e.to))
+    .filter(Boolean)
+    .sort((a, b) => haversine(a.lat, a.lng, p.lat, p.lng) - haversine(b.lat, b.lng, p.lat, p.lng));
+  for (const m of options) {
+    if (stepToward(z, m.lat, m.lng, stepM)) return;
   }
-  stepToward(z, best.lat, best.lng, stepM);
+  if (!stepToward(z, p.lat, p.lng, stepM)) {
+    z.path = []; z.pathIndex = 0; z.repathAt = 0;
+  }
 }
 function wanderStep(z, stepM, now) {
   if (now < z.wanderPauseUntil) return;
@@ -2894,14 +3532,23 @@ function wanderStep(z, stepM, now) {
   }
   if (!target) return;
   z.facing = bearing(z.lat, z.lng, target.lat, target.lng);
-  stepToward(z, target.lat, target.lng, stepM * 0.55);
+  if (!stepToward(z, target.lat, target.lng, stepM * 0.55)) {
+    z.wanderEdge = null;
+    z.wanderPauseUntil = now + rand(900, 2600);
+    return;
+  }
   if (haversine(z.lat, z.lng, target.lat, target.lng) < 3) {
     z.wanderEdge = null;
     z.wanderPauseUntil = now + rand(500, 2400);
   }
 }
 function zombieCanSense(z, dT, cfg, target) {
-  if (dT <= 18) return true;
+  const los = hasLineOfSight(z.lat, z.lng, target.lat, target.lng);
+  // Very close threats can be heard/smelled through a wall, but they still
+  // cannot strike without a clear line of sight (checked separately).
+  if (dT <= 4) return true;
+  if (dT <= 18) return los;
+  if (!los) return false;
   const sp = target.speed || 0;
   const noise = sp > 6.5 ? 1.3 : sp > 2 ? 1.1 : sp < 0.5 ? 0.82 : 1;
   const range = z.visionM * cfg.visionMul * noise;
@@ -3037,10 +3684,17 @@ function updateZombies(dt) {
 
     const step = state.zombieMps * cfg.speedMul * z.speedMul * z.speedFactor * dt;
     if (alerted) {
-      const chaseDirect = dT < 24 || (target.offNetwork && dT < 130) || (target.green && pointInPolygon(z.lat, z.lng, target.green.pts));
+      const clearRun = !segmentBlocked(z.lat, z.lng, target.lat, target.lng);
+      const chaseDirect = clearRun && (
+        dT < 24 ||
+        (target.offNetwork && dT < 130) ||
+        (target.green && pointInPolygon(z.lat, z.lng, target.green.pts))
+      );
       if (chaseDirect) {
         z.facing = bearing(z.lat, z.lng, target.lat, target.lng);
-        stepToward(z, target.lat, target.lng, step);
+        if (!stepToward(z, target.lat, target.lng, step)) {
+          z.path = []; z.pathIndex = 0; z.repathAt = 0;
+        }
       } else {
         if (now >= z.repathAt || !z.path || z.pathIndex >= z.path.length) {
           const sn = nearestNode(z.lat, z.lng);
@@ -3070,6 +3724,7 @@ function checkZombieAttacks(now) {
   for (const z of zombies) {
     const range = ((z.type && z.type.attackM) || ATTACK_RANGE_DEFAULT_M) * zombieReachScale();
     if (haversine(z.lat, z.lng, p.lat, p.lng) > range) continue;
+    if (!hasLineOfSight(z.lat, z.lng, p.lat, p.lng)) continue;
     if (now < (z.attackAt || 0)) continue;
     z.attackAt = now + 1500;
     const base = 6 + Math.min(12, state.wave * 1.4);
@@ -3151,6 +3806,7 @@ function applyZombieSnapshot(list) {
     map.removeLayer(z.marker);
     zombies.splice(i, 1);
   }
+  refreshZombieIconScale();
 }
 function addPlayerZombie(data) {
   if (!data || !Number.isFinite(data.lat) || !Number.isFinite(data.lng)) return null;
@@ -3171,6 +3827,7 @@ function removePlayerZombie(ownerId) {
       zombies.splice(i, 1);
     }
   }
+  refreshZombieIconScale();
 }
 function publishPlayerZombie() {
   if (!net.connected || !net.client || !state.player) return;
@@ -3329,6 +3986,7 @@ function clearWorld() {
 function startGame() {
   if (!state.home) return;
   audio.init();
+  if (state.sensorHeading) enableSensors(true);
   requestWakeLock();
   state.name = sanitizeName(nameInput.value) || defaultName();
   state.room = sanitizeRoom(roomInput.value);
@@ -3517,9 +4175,16 @@ function loop() {
   state.elapsed = (Date.now() - state.startedAt) / 1000;
 
   if (state.simulation) applySimMovement(dt);
+  resolveHeading();
   updateZombies(dt);
   updateFov();
   checkZombieAttacks(now);
+  updateAudioRadar(now);
+  if (now - (state.lastSensorUi || 0) > 1200) {
+    state.lastSensorUi = now;
+    updateCompassChip();
+    updateSensorReadout();
+  }
   checkMission();
   updateSquad();
   if (state.squadLinked) state.score += (state.teamMode ? 3 : 2) * dt;
@@ -3832,7 +4497,7 @@ function renderFriendBoard() {
   }
   const online = new Set();
   for (const r of net.remotes.values()) if (r.u) online.add(sanitizeUser(r.u));
-  const rows = friends.map(f => ({ name: f, best: friendBest(f), live: online.has(f) }))
+  const rows = friends.map(f => ({ name: f, best: friendDisplayBest(f), live: online.has(f) }))
     .sort((a, b) => (Number(b.best && b.best.score) || 0) - (Number(a.best && a.best.score) || 0));
   scoreList.innerHTML = rows.map((r, i) => {
     const b = r.best;
@@ -4083,13 +4748,15 @@ function bindUI() {
   $('#friend-add-btn').addEventListener('click', () => {
     const input = $('#friend-input');
     const err = addFriend(input.value);
-    if (err) toast(err, 'warn', 2000);
+    if (err === 'LOOKUP_FRIEND') toast(`Verifying “${sanitizeUser(input.value)}”…`, 'info', 2400);
+    else if (err) toast(err, 'warn', 2200);
     else input.value = '';
   });
   $('#friend-input').addEventListener('keydown', (e) => {
     if (e.key !== 'Enter') return;
     const err = addFriend(e.target.value);
-    if (err) toast(err, 'warn', 2000);
+    if (err === 'LOOKUP_FRIEND') toast(`Verifying “${sanitizeUser(e.target.value)}”…`, 'info', 2400);
+    else if (err) toast(err, 'warn', 2200);
     else e.target.value = '';
   });
   $('#friend-list').addEventListener('click', (e) => {
@@ -4115,6 +4782,36 @@ function bindUI() {
     audio.init();
     setVision(state.showVision === false, true);
   });
+  const radarBtn = $('#toggle-radar');
+  if (radarBtn) radarBtn.addEventListener('click', () => {
+    audio.init();
+    state.audioRadar = !state.audioRadar;
+    savePrefs();
+    syncSensorToggles();
+    toast(state.audioRadar ? 'Directional threat beeps on' : 'Threat beeps off', 'info', 1800);
+  });
+  const sensorBtn = $('#toggle-sensors');
+  if (sensorBtn) sensorBtn.addEventListener('click', async () => {
+    audio.init();
+    if (state.sensorHeading) disableSensors();
+    else await enableSensors();
+    syncSensorToggles();
+  });
+  const enableSensorsBtn = $('#btn-enable-sensors');
+  if (enableSensorsBtn) enableSensorsBtn.addEventListener('click', async () => {
+    audio.init();
+    await enableSensors();
+    syncSensorToggles();
+  });
+  const recalBtn = $('#btn-recalibrate');
+  if (recalBtn) recalBtn.addEventListener('click', () => {
+    sensors.offset = 0;
+    sensors.turn = 0;
+    sensors.lastCalAt = 0;
+    toast('Compass drift offset cleared — walk a few steps to recalibrate.', 'info', 2600);
+    updateSensorReadout();
+  });
+  syncSensorToggles();
   $('#btn-sim').addEventListener('click', () => {
     audio.init();
     setSimulation(!state.simulation);
